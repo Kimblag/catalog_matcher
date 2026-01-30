@@ -61,6 +61,11 @@ class CatalogItem:
         return replace(self, name=new_name)
 
     def update_attributes(self, new_attributes: dict[str, str]) -> "CatalogItem":
+        # merge dictonaries
+        updated_attrs = {**self.attributes, **new_attributes}
+        return replace(self, attributes=updated_attrs)
+
+    def replace_attributes(self, new_attributes: dict[str, str]) -> "CatalogItem":
         return replace(self, attributes=new_attributes)
 
     def update_description(self, new_description: str) -> "CatalogItem":
