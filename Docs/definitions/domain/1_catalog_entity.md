@@ -36,7 +36,7 @@ Gestionar un catálogo consistente de ítems que representa la oferta disponible
 Entidad interna, no accesible ni manipulable directamente desde el exterior del Catalog.
 
 #### Propiedades
-- item_id: UUID del item.
+- item_id: str-> ID del item.
 - name: nombre del item.
 - category: Categoría del item.
 - subcategory (opcional): subcategoría del item.
@@ -48,7 +48,7 @@ Entidad interna, no accesible ni manipulable directamente desde el exterior del 
 
 #### Comportamiento
 - validate: Se debe validar a sí mismo durante su creación y mutaciones internas.
-  * item_id existe
+  * item_id válido no vacío.
   * name no vacío
   * category no vacío
   * description no vacía
