@@ -67,7 +67,7 @@ app/
 
 ## Stack tecnológico
 
-- Python 3.11
+- Python 3.13.7
 - FastAPI
 - Pydantic v2
 - Pandas
