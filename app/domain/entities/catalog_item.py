@@ -12,9 +12,9 @@ class CatalogItem:
     category: str
     subcategory: Optional[str]
     description: str
-    active: bool
     unit: Optional[str]
     provider: Optional[str]
+    active: bool = field(default=True)
     attributes: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -49,36 +49,41 @@ class CatalogItem:
         if self.subcategory is not None and (not isinstance(self.subcategory, str) or not self.subcategory.strip()):
             raise InvalidCatalogItemException("subcategory is invalid. It must be a non-empty string.")
 
-    # Behavior
 
+    def _replace_and_validate(self, **changes) -> "CatalogItem":
+        new_item = replace(self, **changes)
+        new_item._validate()
+        return new_item
+
+    # Behavior
     def activate(self) -> "CatalogItem":
-        return replace(self, active=True)
+        return self._replace_and_validate(active=True)
 
     def deactivate(self):
         return replace(self, active=False)
 
     def update_name(self, new_name: str) -> "CatalogItem":
-        return replace(self, name=new_name)
+        return self._replace_and_validate(name=new_name)
 
     def update_attributes(self, new_attributes: dict[str, str]) -> "CatalogItem":
         # merge dictonaries
         updated_attrs = {**self.attributes, **new_attributes}
-        return replace(self, attributes=updated_attrs)
+        return self._replace_and_validate(attributes=updated_attrs)
 
     def replace_attributes(self, new_attributes: dict[str, str]) -> "CatalogItem":
-        return replace(self, attributes=new_attributes)
+        return self._replace_and_validate(attributes=new_attributes)
 
     def update_description(self, new_description: str) -> "CatalogItem":
-        return replace(self, description=new_description)
+        return self._replace_and_validate(description=new_description)
 
     def update_category(self, new_category: str) -> "CatalogItem":
-        return replace(self, category=new_category)
+        return self._replace_and_validate(category=new_category)
 
     def update_unit(self, new_unit: str) -> "CatalogItem":
-        return replace(self, unit=new_unit)
+        return self._replace_and_validate(unit=new_unit)
 
     def update_provider(self, new_provider: str) -> "CatalogItem":
-        return replace(self, provider=new_provider)
+        return self._replace_and_validate(provider=new_provider)
 
     def update_subcategory(self, new_subcategory: str) -> "CatalogItem":
-        return replace(self, subcategory=new_subcategory)
+        return self._replace_and_validate(subcategory=new_subcategory)
