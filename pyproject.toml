@@ -8,4 +8,5 @@ dependencies = [
     "openai>=2.16.0",
     "pandas>=3.0.0",
     "pydantic>=2.12.5",
+    "pytest>=9.0.2",
 ]
