@@ -1,0 +1,2 @@
+item_id,name,category,subcategory,description,attributes,unit,provider,active
+123ABC,WD40,Lubricante,Aceites,Aceite multiuso,{"uso": "general", "olor": "neutral"},ml,WD,1
