@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from app.domain.entities.catalog_item import CatalogItem
 from app.domain.enums.catalog_sources import CatalogSource
@@ -119,8 +119,8 @@ class Catalog:
 
 
     ## add or update in batches
-    def add_or_update_items_batch(self, list_items: list[dict[str, str]]) -> dict[str, str]:
-        errors: dict[str, str] = {}
+    def add_or_update_items_batch(self, list_items: list[dict[str, Any]]) -> dict[str, Any]:
+        errors: dict[str, Any] = {}
 
         for item in list_items:
             item_id = item.get("item_id", None)
