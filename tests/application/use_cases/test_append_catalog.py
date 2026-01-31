@@ -4,7 +4,7 @@ from unittest.mock import Mock, call
 from app.application.exceptions.catalog_normalization_exception import CatalogNormalizationException
 from app.application.exceptions.empty_catalog_file_exception import EmptyCatalogFileException
 from app.application.exceptions.unsupported_catalog_source_exception import UnsupportedCatalogSourceException
-from app.application.use_cases.load_catalog import LoadCatalog
+from app.application.use_cases.append_catalog import AppendCatalog
 from app.domain.entities.catalog import Catalog
 
 
@@ -14,6 +14,10 @@ def test_load_catalog_happy_path():
     file_reader = Mock()
     normalizer = Mock()
     repository = Mock()
+    vector_repository = Mock()
+    embedding_service = Mock()
+
+    file_reader.read_catalog.return_value = []
 
     raw_items = [{"item_id": "1"}]
     normalized_items = [{"item_id": "1"}]
@@ -21,11 +25,12 @@ def test_load_catalog_happy_path():
     file_reader.read_catalog.return_value = raw_items
     normalizer.normalize_catalog_items.return_value = normalized_items
 
-    use_case = LoadCatalog(
-        file_reader=file_reader,
-        normalizer=normalizer,
-        catalog_repository=repository,
-    )
+    use_case = AppendCatalog(
+        file_reader, 
+        normalizer, 
+        repository,
+        vector_repository,
+        embedding_service)
 
     # Act
     result = use_case.execute("catalog.csv")
@@ -41,10 +46,17 @@ def test_load_catalog_empty_file():
     file_reader = Mock()
     normalizer = Mock()
     repository = Mock()
+    vector_repository = Mock()
+    embedding_service = Mock()
 
     file_reader.read_catalog.return_value = []
 
-    use_case = LoadCatalog(file_reader, normalizer, repository)
+    use_case = AppendCatalog(
+        file_reader, 
+        normalizer, 
+        repository,
+        vector_repository,
+        embedding_service)
 
     # Act & Assert
     with pytest.raises(EmptyCatalogFileException):
@@ -56,11 +68,18 @@ def test_load_catalog_normalizer_fails():
     file_reader = Mock()
     normalizer = Mock()
     repository = Mock()
+    vector_repository = Mock()
+    embedding_service = Mock()
 
     file_reader.read_catalog.return_value = [{"item_id": "1"}]
     normalizer.normalize_catalog_items.side_effect = CatalogNormalizationException("error")
 
-    use_case = LoadCatalog(file_reader, normalizer, repository)
+    use_case = AppendCatalog(
+        file_reader, 
+        normalizer, 
+        repository,
+        vector_repository,
+        embedding_service)
 
     # Act & Assert
     with pytest.raises(CatalogNormalizationException):
@@ -71,11 +90,18 @@ def test_load_catalog_unsupported_source():
     file_reader = Mock()
     normalizer = Mock()
     repository = Mock()
+    vector_repository = Mock()
+    embedding_service = Mock()
 
     file_reader.read_catalog.return_value = [{"item_id": "1"}]
     normalizer.normalize_catalog_items.return_value = [{"item_id": "1"}]
 
-    use_case = LoadCatalog(file_reader, normalizer, repository)
+    use_case = AppendCatalog(
+        file_reader, 
+        normalizer, 
+        repository,
+        vector_repository,
+        embedding_service)
 
     # Act & Assert
     with pytest.raises(UnsupportedCatalogSourceException):
@@ -87,6 +113,8 @@ def test_load_catalog_batches_items(monkeypatch):
     file_reader = Mock()
     normalizer = Mock()
     repository = Mock()
+    vector_repository = Mock()
+    embedding_service = Mock()
 
     items = [{"item_id": str(i)} for i in range(120)]
     file_reader.read_catalog.return_value = items
@@ -95,7 +123,12 @@ def test_load_catalog_batches_items(monkeypatch):
     add_batch_mock = Mock()
     monkeypatch.setattr(Catalog, "add_or_update_items_batch", add_batch_mock)
 
-    use_case = LoadCatalog(file_reader, normalizer, repository)
+    use_case = AppendCatalog(
+        file_reader, 
+        normalizer, 
+        repository,
+        vector_repository,
+        embedding_service)
 
     # Act
     use_case.execute("catalog.csv")
@@ -109,11 +142,18 @@ def test_load_catalog_calls_reader_once():
     file_reader = Mock()
     normalizer = Mock()
     repository = Mock()
+    vector_repository = Mock()
+    embedding_service = Mock()
 
     file_reader.read_catalog.return_value = [{"item_id": "1"}]
     normalizer.normalize_catalog_items.return_value = [{"item_id": "1"}]
 
-    use_case = LoadCatalog(file_reader, normalizer, repository)
+    use_case = AppendCatalog(
+        file_reader, 
+        normalizer, 
+        repository,
+        vector_repository,
+        embedding_service)
 
     # Act
     use_case.execute("catalog.csv")
@@ -127,11 +167,18 @@ def test_load_catalog_calls_normalizer_once():
     file_reader = Mock()
     normalizer = Mock()
     repository = Mock()
+    vector_repository = Mock()
+    embedding_service = Mock()
 
     file_reader.read_catalog.return_value = [{"item_id": "1"}]
     normalizer.normalize_catalog_items.return_value = [{"item_id": "1"}]
 
-    use_case = LoadCatalog(file_reader, normalizer, repository)
+    use_case = AppendCatalog(
+        file_reader, 
+        normalizer, 
+        repository,
+        vector_repository,
+        embedding_service)
 
     # Act
     use_case.execute("catalog.csv")
@@ -145,11 +192,18 @@ def test_load_catalog_persists_once():
     file_reader = Mock()
     normalizer = Mock()
     repository = Mock()
+    vector_repository = Mock()
+    embedding_service = Mock()
 
     file_reader.read_catalog.return_value = [{"item_id": "1"}]
     normalizer.normalize_catalog_items.return_value = [{"item_id": "1"}]
 
-    use_case = LoadCatalog(file_reader, normalizer, repository)
+    use_case = AppendCatalog(
+        file_reader, 
+        normalizer, 
+        repository,
+        vector_repository,
+        embedding_service)
 
     # Act
     use_case.execute("catalog.csv")
@@ -163,11 +217,18 @@ def test_load_catalog_does_not_return_value():
     file_reader = Mock()
     normalizer = Mock()
     repository = Mock()
+    vector_repository = Mock()
+    embedding_service = Mock()
 
     file_reader.read_catalog.return_value = [{"item_id": "1"}]
     normalizer.normalize_catalog_items.return_value = [{"item_id": "1"}]
 
-    use_case = LoadCatalog(file_reader, normalizer, repository)
+    use_case = AppendCatalog(
+        file_reader, 
+        normalizer, 
+        repository,
+        vector_repository,
+        embedding_service)
 
     # Act
     result = use_case.execute("catalog.csv")
