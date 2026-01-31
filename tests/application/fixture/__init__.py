@@ -1,7 +1,8 @@
+from typing import Any
 import pytest
 
 @pytest.fixture
-def raw_catalog_items_valid() -> list[dict[str, str]]:
+def raw_catalog_items_valid() -> list[dict[str, Any]]:
     return [
         {
             "item_id": "ITEM-001",
