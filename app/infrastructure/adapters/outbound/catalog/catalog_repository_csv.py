@@ -32,7 +32,7 @@ class CatalogRepositoryCSV(CatalogRepository):
         
         with open(self.csv_path, mode='r', encoding="utf-8") as file:
             csv_reader = csv.DictReader(file)
-            return list(csv_reader)
+            return [dict(row) for row in csv_reader]
     
 
     def save(self, catalog: list[dict[str, Any]]) -> None:
