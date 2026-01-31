@@ -1,3 +1,4 @@
+from typing import Any
 from app.application.exceptions.requirement_normalization_exception import RequirementNormalizationException
 from app.application.ports.normalizer import NormalizerRequirement
 
@@ -18,8 +19,8 @@ class RequirementNormalizer(NormalizerRequirement):
         "attributes"
     }
 
-    def normalize_requirement_items(self, raw_items: list[dict[str, str]]) -> list[dict[str, str]]:
-        normalized: list[dict[str, str]] = []
+    def normalize_requirement_items(self, raw_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        normalized: list[dict[str, Any]] = []
 
         for index, item in enumerate(raw_items):
             if not isinstance(item, dict):

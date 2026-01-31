@@ -1,3 +1,4 @@
+from typing import Any
 from app.application.exceptions.catalog_normalization_exception import CatalogNormalizationException
 from app.application.ports.normalizer import NormalizerCatalog
 
@@ -17,8 +18,8 @@ class CatalogNormalizer(NormalizerCatalog):
         "attributes",
     }
 
-    def normalize_catalog_items(self, raw_items: list[dict[str, str]]) -> list[dict[str, str]]:
-        normalized: list[dict[str, str]] = []
+    def normalize_catalog_items(self, raw_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        normalized: list[dict[str, Any]] = []
 
         for index, item in enumerate(raw_items):
             if not isinstance(item, dict):
