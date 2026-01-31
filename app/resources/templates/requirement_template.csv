@@ -1,1 +1,1 @@
-requirement_id,description,category,constraints,quantity,unit,priority
+name,description,category,subcategory,quantity,unit,priority,provider,attributes
