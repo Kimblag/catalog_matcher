@@ -12,7 +12,7 @@ class Catalog:
     source: CatalogSource
     items: dict[str, CatalogItem]
 
-    def __init__(self, catalog_source: CatalogSource):
+    def __init__(self, catalog_source: CatalogSource = CatalogSource.MANUAL):
         self.version: int = 0
         self.last_updated: datetime = datetime.now()
         self.source: CatalogSource = catalog_source
@@ -137,7 +137,7 @@ class Catalog:
                     subcategory=item.get("subcategory"),
                     unit=item.get("unit"),
                     provider=item.get("provider"),
-                    attributes=item.get("attributes", None),
+                    attributes=item.get("attributes", {}),
                 )
             except Exception as e:
                  errors[item_id] = str(e)
@@ -243,3 +243,9 @@ class Catalog:
     def get_items(self) -> dict[str, CatalogItem]:
         return self.items.copy()
 
+    ## get_item
+    def get_item(self, item_id: str) -> CatalogItem:
+        existing_item = self.items.get(item_id, None)
+        if existing_item is None:
+            raise ItemNotFoundException()
+        return existing_item
