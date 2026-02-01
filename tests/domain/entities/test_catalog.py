@@ -75,7 +75,7 @@ def test_add_or_update_item_invalid():
 def test_add_or_update_items_batch_all_valid(base_catalog_item, min_catalog_item):
     catalog = Catalog(CatalogSource.MANUAL)
     batch = [base_catalog_item.copy(), min_catalog_item.copy()]
-    errors = catalog.add_or_update_items_batch(batch)
+    errors = catalog.batch_upsert(batch)
     assert errors == {}
     assert catalog.get_version() == 1
     for item in batch:
@@ -90,7 +90,7 @@ def test_add_or_update_items_batch_some_invalid(base_catalog_item):
         base_catalog_item.copy(),
         {"item_id": "bad1", "name": "", "category": None}
     ]
-    errors = catalog.add_or_update_items_batch(batch)
+    errors = catalog.batch_upsert(batch)
     assert "bad1" in errors
     assert "123ABC" in catalog.items
     assert catalog.get_version() == 1
@@ -103,7 +103,7 @@ def test_add_or_update_items_batch_all_invalid():
         {"item_id": "bad1", "name": "", "category": None},
         {"item_id": "bad2", "name": None, "category": None}
     ]
-    errors = catalog.add_or_update_items_batch(batch)
+    errors = catalog.batch_upsert(batch)
     assert "bad1" in errors
     assert "bad2" in errors
     assert catalog.get_version() == 0
