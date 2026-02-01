@@ -1,14 +1,14 @@
 from typing import Annotated
+from urllib import response
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile, status
 
+from app.application.dto.catalog_dtos import CatalogListDTO
 from app.application.ports.catalog_repository import CatalogRepository
 from app.application.ports.normalizer import Normalizer
 from app.application.use_cases.upsert_catalog import UpsertCatalog
 from app.application.use_cases.list_catalog_items import ListCatalogItems
 from app.infrastructure.adapters.inbound.api.dependencies import *
-from app.infrastructure.adapters.inbound.api.schemas.catalog import \
-    CatalogListOut
 from app.infrastructure.adapters.outbound import *
 from app.infrastructure.adapters.outbound.vector_store.vector_repository_faiss import \
     VectorRepositoryFAISS
@@ -19,7 +19,7 @@ catalog_router = APIRouter(
 )
 
 
-@catalog_router.get("/", status_code=status.HTTP_200_OK, response_model=CatalogListOut)
+@catalog_router.get("/", status_code=status.HTTP_200_OK, response_model=CatalogListDTO)
 def list_catalog(
     catalog_repository: Annotated[CatalogRepository, Depends(get_catalog_repository)],
     category: Annotated[str | None, Query()] = None,
@@ -28,17 +28,15 @@ def list_catalog(
     provider: Annotated[str | None, Query()] = None,
     include_inactive: Annotated[bool, Query()] = False,
 ):
-
     use_case = ListCatalogItems(catalog_repository)
-    catalog_items = use_case.execute(
+
+    return use_case.execute(
         category=category,
         subcategory=subcategory,
         unit=unit,
         provider=provider,
         include_inactive=include_inactive,
     )
-
-    return CatalogListOut(catalog=catalog_items)
 
 
 @catalog_router.post("/items", status_code=status.HTTP_202_ACCEPTED)
