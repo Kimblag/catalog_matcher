@@ -119,7 +119,7 @@ class Catalog:
 
 
     ## add or update in batches
-    def add_or_update_items_batch(self, list_items: list[dict[str, Any]]) -> dict[str, Any]:
+    def batch_upsert(self, list_items: list[dict[str, Any]]) -> dict[str, Any]:
         errors: dict[str, Any] = {}
 
         for item in list_items:
