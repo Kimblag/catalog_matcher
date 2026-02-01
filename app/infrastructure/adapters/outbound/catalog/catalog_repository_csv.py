@@ -36,14 +36,22 @@ class CatalogRepositoryCSV(CatalogRepository):
             for row in csv_reader:
                 item = dict(row)
 
-                if "attributes" in item and item["attributes"]:
-                    try:
-                        item["attributes"] = json.loads(item["attributes"])
-                    except json.JSONDecodeError:
+                if "attributes" in item:
+                    attr_value = item["attributes"]
+                    if attr_value:
+                        try:
+                            item["attributes"] = json.loads(attr_value)
+                        except json.JSONDecodeError:
+                            item["attributes"] = {}
+                    else:
                         item["attributes"] = {}
 
                 if "active" in item:
-                    item["active"] = item["active"].lower() == "true"
+                    active_value = item["active"]
+                    if active_value is None or active_value == "":
+                        item["active"] = True
+                    else:
+                        item["active"] = active_value.lower() == "true"
 
                 items.append(item)
 
@@ -68,11 +76,14 @@ class CatalogRepositoryCSV(CatalogRepository):
             row = dict(item)
 
             # attributes -> json string
-            attributes = row.get("attributes", {})
-            row["attributes"] = json.dumps(attributes)
+            attributes = row.get("attributes")
+            if attributes is None or attributes == {}:
+                row["attributes"] = "{}"
+            else:
+                row["attributes"] = json.dumps(attributes)
 
-            # active -> string
-            row["active"] = str(row.get("active", True)).lower()
+                # active -> string
+                row["active"] = str(row.get("active", True)).lower()
 
             serialized.append(row)
 
