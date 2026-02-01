@@ -1,4 +1,3 @@
-from click import File
 from fastapi import APIRouter, status
 from fastapi.responses import FileResponse
 
@@ -11,7 +10,7 @@ template_router = APIRouter(
 
 
 @template_router.get(
-    "/catalog", status_code=status.HTTP_200_OK, response_class=FileResponse
+    "/catalogs", status_code=status.HTTP_200_OK, response_class=FileResponse
 )
 def get_catalog_template():
     return FileResponse(
@@ -22,7 +21,7 @@ def get_catalog_template():
 
 
 @template_router.get(
-    "/requirement", status_code=status.HTTP_200_OK, response_class=FileResponse
+    "/requirements", status_code=status.HTTP_200_OK, response_class=FileResponse
 )
 def get_requirement_template():
     return FileResponse(
