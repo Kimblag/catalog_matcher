@@ -1,6 +1,7 @@
 from typing import Any
 import pytest
 
+
 @pytest.fixture
 def raw_catalog_items_valid() -> list[dict[str, Any]]:
     return [
@@ -9,6 +10,7 @@ def raw_catalog_items_valid() -> list[dict[str, Any]]:
             " name ": " Tornillo ",
             " category ": " Ferretería ",
             " description ": " Tornillo de acero ",
+            " active ": True,
             " unit ": " unidad ",
             " provider ": " Acme ",
         },
@@ -17,7 +19,21 @@ def raw_catalog_items_valid() -> list[dict[str, Any]]:
             " name ": " Tuerca ",
             " category ": " Ferretería ",
             " description ": " Tuerca hexagonal ",
+            " active ": True,
         },
+    ]
+
+
+@pytest.fixture
+def raw_catalog_item_single():
+    return [
+        {
+            " item_id ": " ITEM-001 ",
+            " name ": " Tornillo ",
+            " category ": " Ferretería ",
+            " description ": " Tornillo de acero ",
+            " active ": True,
+        }
     ]
 
 
@@ -32,9 +48,8 @@ def raw_catalog_items_missing_required_field(raw_catalog_items_valid):
 
 @pytest.fixture
 def raw_catalog_items_not_dict():
-    return [
-        "not a dict"
-    ]
+    return ["not a dict"]
+
 
 @pytest.fixture
 def raw_catalog_items_invalid_value_type(raw_catalog_items_valid):
@@ -43,15 +58,3 @@ def raw_catalog_items_invalid_value_type(raw_catalog_items_valid):
     broken[" unit "] = 123
     items[0] = broken
     return items
-
-
-@pytest.fixture
-def raw_catalog_item_single():
-    return [
-        {
-            " item_id ": " ITEM-001 ",
-            " name ": " Tornillo ",
-            " category ": " Ferretería ",
-            " description ": " Tornillo de acero ",
-        }
-    ]
