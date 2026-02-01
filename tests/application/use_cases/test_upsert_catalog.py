@@ -1,7 +1,55 @@
-from app.application.exceptions.empty_catalog_file_exception import EmptyCatalogFileException
-from tests.application.fixture.upsert_catalog import *
+from unittest.mock import Mock
+import pytest
 
-def test_execute_when_valid_catalog_should_append_and_persist(
+from app.application.use_cases.upsert_catalog import UpsertCatalog
+from app.application.exceptions.empty_catalog_file_exception import EmptyCatalogFileException
+from app.application.exceptions.catalog_normalization_exception import CatalogNormalizationException
+from app.application.constants import BATCH_SIZE
+
+
+@pytest.fixture
+def file_reader():
+    return Mock()
+
+
+@pytest.fixture
+def normalizer():
+    return Mock()
+
+
+@pytest.fixture
+def catalog_repository():
+    return Mock()
+
+
+@pytest.fixture
+def vector_repository():
+    return Mock()
+
+
+@pytest.fixture
+def embedding_service():
+    return Mock()
+
+
+@pytest.fixture
+def use_case(
+    file_reader,
+    normalizer,
+    catalog_repository,
+    vector_repository,
+    embedding_service,
+):
+    return UpsertCatalog(
+        file_reader=file_reader,
+        normalizer=normalizer,
+        catalog_repository=catalog_repository,
+        vector_repository=vector_repository,
+        embedding_service=embedding_service,
+    )
+
+
+def test_execute_valid_catalog_should_append_and_persist(
     use_case,
     file_reader,
     normalizer,
@@ -10,8 +58,6 @@ def test_execute_when_valid_catalog_should_append_and_persist(
     embedding_service,
 ):
     # Arrange
-    file_path = "catalog.csv"
-
     raw_items = [
         {
             "Item_Id": "A1",
@@ -27,23 +73,21 @@ def test_execute_when_valid_catalog_should_append_and_persist(
             "name": "laptop",
             "category": "hardware",
             "description": "portable computer",
-            "attributes": {},
+            "active": True,
         }
     ]
 
-    persisted_items = []
-
     file_reader.read_catalog.return_value = raw_items
-    normalizer.normalize_catalog_items.return_value = normalized_items
-    catalog_repository.get.return_value = persisted_items
+    normalizer.normalize.return_value = normalized_items
+    catalog_repository.get.return_value = []
     embedding_service.get_embedding.return_value = [0.1, 0.2, 0.3]
 
     # Act
-    use_case.execute(file_path)
+    use_case.execute(b"file content")
 
     # Assert — lectura y normalización
-    file_reader.read_catalog.assert_called_once_with(file_path)
-    normalizer.normalize_catalog_items.assert_called_once_with(raw_items)
+    file_reader.read_catalog.assert_called_once_with(b"file content")
+    normalizer.normalize.assert_called_once_with(raw_items)
 
     # Assert — persistencia de catálogo
     catalog_repository.get.assert_called_once()
@@ -62,7 +106,7 @@ def test_execute_when_valid_catalog_should_append_and_persist(
     assert vector_items[0]["embedding"] == [0.1, 0.2, 0.3]
 
 
-def test_execute_when_file_is_empty_should_fail(
+def test_execute_empty_file_should_fail(
     use_case,
     file_reader,
 ):
@@ -71,19 +115,12 @@ def test_execute_when_file_is_empty_should_fail(
 
     # Act / Assert
     with pytest.raises(EmptyCatalogFileException):
-        use_case.execute("catalog.csv")
+        use_case.execute(b"content")
 
     file_reader.read_catalog.assert_called_once()
 
 
-
-import pytest
-from app.application.exceptions.catalog_normalization_exception import (
-    CatalogNormalizationException,
-)
-
-
-def test_execute_when_normalizer_fails_should_propagate(
+def test_execute_normalizer_fails_should_propagate(
     use_case,
     file_reader,
     normalizer,
@@ -94,19 +131,19 @@ def test_execute_when_normalizer_fails_should_propagate(
     ]
 
     file_reader.read_catalog.return_value = raw_items
-    normalizer.normalize_catalog_items.side_effect = CatalogNormalizationException(
+    normalizer.normalize.side_effect = CatalogNormalizationException(
         "invalid catalog"
     )
 
     # Act / Assert
     with pytest.raises(CatalogNormalizationException):
-        use_case.execute("catalog.csv")
+        use_case.execute(b"content")
 
     file_reader.read_catalog.assert_called_once()
-    normalizer.normalize_catalog_items.assert_called_once_with(raw_items)
+    normalizer.normalize.assert_called_once_with(raw_items)
 
 
-def test_execute_when_persisted_items_exist_should_merge(
+def test_execute_persisted_items_exist_should_merge(
     use_case,
     file_reader,
     normalizer,
@@ -129,7 +166,7 @@ def test_execute_when_persisted_items_exist_should_merge(
             "name": "new item",
             "category": "cat",
             "description": "desc",
-            "attributes": {},
+            "active": True,
         }
     ]
 
@@ -139,21 +176,17 @@ def test_execute_when_persisted_items_exist_should_merge(
             "name": "old item",
             "category": "cat",
             "description": "desc",
-            "attributes": {},
-            "subcategory": None,
-            "unit": None,
-            "provider": None,
             "active": True,
         }
     ]
 
     file_reader.read_catalog.return_value = raw_items
-    normalizer.normalize_catalog_items.return_value = normalized_items
+    normalizer.normalize.return_value = normalized_items
     catalog_repository.get.return_value = persisted_items
     embedding_service.get_embedding.return_value = [0.1]
 
     # Act
-    use_case.execute("catalog.csv")
+    use_case.execute(b"content")
 
     # Assert
     saved_items = catalog_repository.save.call_args.args[0]
@@ -162,10 +195,7 @@ def test_execute_when_persisted_items_exist_should_merge(
     assert item_ids == {"old", "new"}
 
 
-from app.application.constants import BATCH_SIZE
-
-
-def test_execute_when_items_exceed_batch_size_should_batch(
+def test_execute_items_exceed_batch_size_should_batch(
     use_case,
     file_reader,
     normalizer,
@@ -189,18 +219,18 @@ def test_execute_when_items_exceed_batch_size_should_batch(
             "name": f"name_{i}",
             "category": "cat",
             "description": "desc",
-            "attributes": {},
+            "active": True,
         }
         for i in range(BATCH_SIZE + 1)
     ]
 
     file_reader.read_catalog.return_value = raw_items
-    normalizer.normalize_catalog_items.return_value = normalized_items
+    normalizer.normalize.return_value = normalized_items
     catalog_repository.get.return_value = []
     embedding_service.get_embedding.return_value = [0.1]
 
     # Act
-    use_case.execute("catalog.csv")
+    use_case.execute(b"content")
 
     # Assert
     saved_items = catalog_repository.save.call_args.args[0]
@@ -231,17 +261,17 @@ def test_execute_should_generate_embeddings_for_all_items(
             "name": "item",
             "category": "cat",
             "description": "desc",
-            "attributes": {},
+            "active": True,
         }
     ]
 
     file_reader.read_catalog.return_value = raw_items
-    normalizer.normalize_catalog_items.return_value = normalized_items
+    normalizer.normalize.return_value = normalized_items
     catalog_repository.get.return_value = []
     embedding_service.get_embedding.return_value = [0.9]
 
     # Act
-    use_case.execute("catalog.csv")
+    use_case.execute(b"content")
 
     # Assert
     embedding_service.get_embedding.assert_called_once()
@@ -268,21 +298,22 @@ def test_execute_should_not_return_any_value(
         }
     ]
 
-    normalizer.normalize_catalog_items.return_value = [
+    normalized_items = [
         {
             "item_id": "1",
             "name": "item",
             "category": "cat",
             "description": "desc",
-            "attributes": {},
+            "active": True,
         }
     ]
 
+    normalizer.normalize.return_value = normalized_items
     catalog_repository.get.return_value = []
     embedding_service.get_embedding.return_value = [0.1]
 
     # Act
-    result = use_case.execute("catalog.csv")
+    result = use_case.execute(b"content")
 
     # Assert
     assert result is None
