@@ -12,7 +12,7 @@ def test_normalize_valid_single_item(raw_catalog_item_single):
     normalizer = CatalogNormalizer()
 
     # Act
-    result = normalizer.normalize_catalog_items(raw_catalog_item_single)
+    result = normalizer.normalize(raw_catalog_item_single)
 
     # Assert
     assert result == [
@@ -30,7 +30,7 @@ def test_normalize_valid_multiple_items(raw_catalog_items_valid):
     normalizer = CatalogNormalizer()
 
     # Act
-    result = normalizer.normalize_catalog_items(raw_catalog_items_valid)
+    result = normalizer.normalize(raw_catalog_items_valid)
 
     # Assert
     assert len(result) == 2
@@ -43,7 +43,7 @@ def test_normalize_ignores_optional_fields(raw_catalog_items_valid):
     normalizer = CatalogNormalizer()
 
     # Act
-    result = normalizer.normalize_catalog_items(raw_catalog_items_valid)
+    result = normalizer.normalize(raw_catalog_items_valid)
 
     # Assert
     assert "unit" in result[0]
@@ -57,7 +57,7 @@ def test_normalize_trims_and_lowercases_keys(raw_catalog_item_single):
     normalizer = CatalogNormalizer()
 
     # Act
-    result = normalizer.normalize_catalog_items(raw_catalog_item_single)
+    result = normalizer.normalize(raw_catalog_item_single)
 
     # Assert
     assert "item_id" in result[0]
@@ -69,7 +69,7 @@ def test_normalize_trims_and_lowercases_values(raw_catalog_item_single):
     normalizer = CatalogNormalizer()
 
     # Act
-    result = normalizer.normalize_catalog_items(raw_catalog_item_single)
+    result = normalizer.normalize(raw_catalog_item_single)
 
     # Assert
     assert result[0]["name"] == "tornillo"
@@ -80,7 +80,7 @@ def test_normalize_empty_raw_items_list():
     normalizer = CatalogNormalizer()
 
     # Act
-    result = normalizer.normalize_catalog_items([])
+    result = normalizer.normalize([])
 
     # Assert
     assert result == []
@@ -91,7 +91,7 @@ def test_normalize_attributes_non_string(raw_catalog_items_invalid_value_type):
     normalizer = CatalogNormalizer()
 
     # Act
-    result = normalizer.normalize_catalog_items(raw_catalog_items_invalid_value_type)
+    result = normalizer.normalize(raw_catalog_items_invalid_value_type)
 
     # Assert
     assert isinstance(result[0]["unit"], int)
@@ -105,7 +105,7 @@ def test_normalize_missing_required_field(raw_catalog_items_missing_required_fie
 
     # Act & Assert
     with pytest.raises(CatalogNormalizationException):
-        normalizer.normalize_catalog_items(raw_catalog_items_missing_required_field)
+        normalizer.normalize(raw_catalog_items_missing_required_field)
 
 
 def test_normalize_item_not_dict(raw_catalog_items_not_dict):
@@ -114,4 +114,4 @@ def test_normalize_item_not_dict(raw_catalog_items_not_dict):
 
     # Act & Assert
     with pytest.raises(CatalogNormalizationException):
-        normalizer.normalize_catalog_items(raw_catalog_items_not_dict)
+        normalizer.normalize(raw_catalog_items_not_dict)
