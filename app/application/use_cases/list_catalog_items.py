@@ -1,6 +1,5 @@
-from typing import Optional
+from typing import Any, Any, Optional
 
-from app.application.dto.catalog_list_dto import CatalogItemDTO, CatalogListDTO
 from app.application.ports.catalog_repository import CatalogRepository
 from app.domain.entities.catalog import Catalog
 
@@ -10,37 +9,60 @@ class ListCatalogItems:
         self.catalog_repository = catalog_repository
 
     def execute(self, 
-                filters: Optional[dict[str, str]] = None, 
-                include_inactive: bool = False) -> CatalogListDTO:
-        catalog: Catalog = self.catalog_repository.get()
-        items = catalog.get_items()
+                category: Optional[str] = None, 
+                subcategory: Optional[str] = None,
+                unit: Optional[str] = None,
+                provider: Optional[str] = None,
+                include_inactive: Optional[bool] = False) -> list[dict[str, Any]]:
+        items: list[dict[str, Any]] = self.catalog_repository.get()
 
         filtered_items = []
-
-        for item in items.values():
-            if not include_inactive and not item.active:
+        filters = self._filters_builder(
+            category=category,
+            subcategory=subcategory,
+            unit=unit,
+            provider=provider
+        )
+        for item in items:
+            if not include_inactive and not item.get("active", True):
                 continue
 
             # Apply filters
             if filters:
                 match = all(
-                    getattr(item, k, None) == v for k, v in filters.items())
-
+                    item.get(k) == v for k, v in filters.items())
                 if not match:
                     continue
 
-            dto = CatalogItemDTO(
-                item_id=item.item_id,
-                name=item.name,
-                category=item.category,
-                description=item.description,
-                subcategory=item.subcategory,
-                unit=item.unit,
-                provider=item.provider,
-                active=item.active,
-                attributes=item.attributes,
-            )
+            dto = {
+                "item_id": item.get("item_id", ""),
+                "name": item.get("name", ""),
+                "category": item.get("category", ""),
+                "description": item.get("description", ""),
+                "subcategory": item.get("subcategory", ""),
+                "unit": item.get("unit", ""),
+                "provider": item.get("provider"),
+                "active": item.get("active", True),
+                "attributes": item.get("attributes", {}),
+            }           
             filtered_items.append(dto)
 
 
-        return CatalogListDTO(catalog=filtered_items)
+        return filtered_items
+
+
+    def _filters_builder(self, 
+                         category: Optional[str],
+                         subcategory: Optional[str],
+                         unit: Optional[str],
+                         provider: Optional[str]) -> dict[str, str]:
+        filters = {}
+        if category:
+            filters["category"] = category
+        if subcategory:
+            filters["subcategory"] = subcategory
+        if unit:
+            filters["unit"] = unit
+        if provider:
+            filters["provider"] = provider
+        return filters
