@@ -1,0 +1,19 @@
+import openai
+
+from app.application.ports.embedding_service import EmbeddingService
+from app.infrastructure.config import settings
+
+
+class OpenAIEmbeddingService(EmbeddingService):
+    def __init__(self, model: str = settings.OPENAI_MODEL):
+        self.model = model
+        self.api_key = settings.OPENAI_API_KEY
+        if not self.api_key:
+            raise ValueError("OPENAI_API_KEY is not set")
+        openai.api_key = self.api_key
+
+
+    def get_embedding(self, text: str) -> list[float]:
+        response = openai.embeddings.create(model=self.model, input=text)
+
+        return response.data[0].embedding
