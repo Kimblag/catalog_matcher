@@ -19,10 +19,13 @@ class RequirementNormalizer(NormalizerRequirement):
         "attributes"
     }
 
-    def normalize_requirement_items(self, raw_items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def normalize_requirements(
+        self,
+        raw_requirements: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         normalized: list[dict[str, Any]] = []
 
-        for index, item in enumerate(raw_items):
+        for index, item in enumerate(raw_requirements):
             if not isinstance(item, dict):
                 raise RequirementNormalizationException(
                      f"Item at index {index} is not a dictionary."
