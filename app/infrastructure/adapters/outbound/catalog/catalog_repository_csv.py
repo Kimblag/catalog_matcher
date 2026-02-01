@@ -29,10 +29,25 @@ class CatalogRepositoryCSV(CatalogRepository):
     def get(self) -> list[dict[str, Any]]:
         if not self.csv_path.exists():
             return []
-        
+
         with open(self.csv_path, mode='r', encoding="utf-8") as file:
             csv_reader = csv.DictReader(file)
-            return [dict(row) for row in csv_reader]
+            items = []
+            for row in csv_reader:
+                item = dict(row)
+
+                if "attributes" in item and item["attributes"]:
+                    try:
+                        item["attributes"] = json.loads(item["attributes"])
+                    except json.JSONDecodeError:
+                        item["attributes"] = {}
+
+                if "active" in item:
+                    item["active"] = item["active"].lower() == "true"
+
+                items.append(item)
+
+            return items
     
 
     def save(self, catalog: list[dict[str, Any]]) -> None:
