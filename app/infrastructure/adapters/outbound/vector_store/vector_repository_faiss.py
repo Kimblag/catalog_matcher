@@ -38,14 +38,22 @@ class VectorRepositoryFAISS(VectorRepository):
     
 
     def save(self, items: list[dict]) -> None:
+        # No items to save
         if not items:
             return
 
-        embeddings = np.array([item["embedding"] for item in items], np.float32)
-        self.index.add(embeddings)
-        faiss.write_index(self.index, str(self.path))
+        # reset index and mapping
+        self.index.reset()
+        self.index_to_item_id = []
 
-        self.index_to_item_id.extend([item["item_id"] for item in items])
+        embeddings = np.array(
+            [item["embedding"] for item in items],
+            np.float32)
+        
+        self.index.add(embeddings)
+        self.index_to_item_id = [item["item_id"] for item in items]
+
+        faiss.write_index(self.index, str(self.path))
         with open(self.mapping_path, "w", encoding="utf-8") as f:
             json.dump(self.index_to_item_id, f)
 
@@ -54,11 +62,15 @@ class VectorRepositoryFAISS(VectorRepository):
         if len(query_embedding) != self.dimension:
             raise ValueError("Invalid Vector dimension")
 
-        q = np.array([query_embedding], dtype=np.float32)
+        q = np.array(
+            [query_embedding], 
+            dtype=np.float32)
         distances, indices = self.index.search(q, top_k)
 
-        results = []
+        results: list[tuple[str, float]] = []
+        
         for idx, dist in zip(indices[0], distances[0]):
-            if idx < len(self.index_to_item_id):
+            if 0 <= idx < len(self.index_to_item_id):
                 results.append((self.index_to_item_id[idx], float(dist)))
+       
         return results
