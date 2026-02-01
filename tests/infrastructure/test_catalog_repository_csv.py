@@ -6,7 +6,7 @@ import pytest
 
 from app.infrastructure.adapters.outbound.catalog.catalog_repository_csv import CatalogRepositoryCSV
 
-# file does not exists
+
 def test_get_when_file_does_not_exist_returns_empty(tmp_path: Path):
     csv_path = tmp_path / "catalog.csv"
     repo = CatalogRepositoryCSV(csv_path=csv_path)
@@ -15,7 +15,7 @@ def test_get_when_file_does_not_exist_returns_empty(tmp_path: Path):
 
     assert result == []
 
-# file exists and has data
+
 def test_get_when_file_exists_returns_rows(tmp_path: Path):
     csv_path = tmp_path / "catalog.csv"
 
@@ -55,10 +55,9 @@ def test_get_when_file_exists_returns_rows(tmp_path: Path):
 
     assert len(result) == 1
     assert result[0]["item_id"] == "1"
-    assert result[0]["active"] == "true"
+    assert result[0]["active"] is True  # Convertido a bool
 
 
-# empty file catalog
 def test_save_when_catalog_is_empty_writes_header_only(tmp_path: Path):
     csv_path = tmp_path / "catalog.csv"
     repo = CatalogRepositoryCSV(csv_path=csv_path)
@@ -81,6 +80,7 @@ def test_save_when_catalog_has_items_persists_rows(tmp_path: Path):
             "name": "item",
             "category": "cat",
             "description": "desc",
+            "active": True,
         }
     ]
 
@@ -90,7 +90,8 @@ def test_save_when_catalog_has_items_persists_rows(tmp_path: Path):
 
     assert len(rows) == 1
     assert rows[0]["item_id"] == "1"
-    assert rows[0]["active"] == "true"
+    assert rows[0]["active"] is True  # Convertido a bool
+
 
 def test_save_should_ignore_extra_fields(tmp_path: Path):
     csv_path = tmp_path / "catalog.csv"
@@ -102,6 +103,7 @@ def test_save_should_ignore_extra_fields(tmp_path: Path):
             "name": "item",
             "category": "cat",
             "description": "desc",
+            "active": True,
             "unexpected": "boom",
         }
     ]
@@ -123,6 +125,7 @@ def test_save_should_serialize_attributes_as_json(tmp_path: Path):
             "category": "cat",
             "description": "desc",
             "attributes": {"a": "1", "b": "2"},
+            "active": True,
         }
     ]
 
@@ -130,9 +133,8 @@ def test_save_should_serialize_attributes_as_json(tmp_path: Path):
     rows = repo.get()
 
     attributes = rows[0]["attributes"]
-    parsed = json.loads(attributes)
 
-    assert parsed == {"a": "1", "b": "2"}
+    assert attributes == {"a": "1", "b": "2"}  # Ya es dict
 
 
 def test_save_should_default_active_to_true(tmp_path: Path):
@@ -151,10 +153,10 @@ def test_save_should_default_active_to_true(tmp_path: Path):
     repo.save(catalog)
     rows = repo.get()
 
-    assert rows[0]["active"] == "true"
+    assert rows[0]["active"] is True  # Convertido a bool
 
 
-def test_get_after_save_returns_raw_storage_format(tmp_path: Path):
+def test_get_after_save_returns_deserialized_format(tmp_path: Path):
     csv_path = tmp_path / "catalog.csv"
     repo = CatalogRepositoryCSV(csv_path=csv_path)
 
@@ -172,5 +174,48 @@ def test_get_after_save_returns_raw_storage_format(tmp_path: Path):
     repo.save(catalog)
     rows = repo.get()
 
-    assert isinstance(rows[0]["attributes"], str)
-    assert rows[0]["active"] in ("true", "false")
+    assert isinstance(rows[0]["attributes"], dict)  # Deserializado
+    assert rows[0]["attributes"] == {"x": "y"}
+    assert rows[0]["active"] is False  # Convertido a bool
+
+
+def test_get_deserializes_empty_attributes(tmp_path: Path):
+    csv_path = tmp_path / "catalog.csv"
+
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["item_id", "name", "category", "description", "attributes", "active"])
+        writer.writeheader()
+        writer.writerow({
+            "item_id": "1",
+            "name": "item",
+            "category": "cat",
+            "description": "desc",
+            "attributes": "",
+            "active": "true"
+        })
+
+    repo = CatalogRepositoryCSV(csv_path=csv_path)
+    result = repo.get()
+
+    assert result[0]["attributes"] == {}
+
+
+def test_save_handles_none_attributes(tmp_path: Path):
+    csv_path = tmp_path / "catalog.csv"
+    repo = CatalogRepositoryCSV(csv_path=csv_path)
+
+    catalog = [
+        {
+            "item_id": "1",
+            "name": "item",
+            "category": "cat",
+            "description": "desc",
+            "attributes": None,
+            "active": True,
+        }
+    ]
+
+    repo.save(catalog)
+    rows = repo.get()
+
+    assert rows[0]["attributes"] == {}

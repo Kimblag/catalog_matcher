@@ -1,30 +1,30 @@
 import pytest
 from unittest.mock import patch, MagicMock
-import os
 
 from app.infrastructure.adapters.outbound.embeddings.embedding_service_open_ai import OpenAIEmbeddingService
 
 
+@pytest.fixture
+def mock_settings():
+    with patch('app.infrastructure.adapters.outbound.embeddings.embedding_service_open_ai.settings') as mock:
+        mock.OPENAI_API_KEY = "test-api-key-12345"
+        mock.OPENAI_MODEL = "text-embedding-3-small"
+        yield mock
 
 
 @pytest.fixture
-def mock_env_api_key(monkeypatch):
-    monkeypatch.setenv("OPENAI_API_KEY", "test-api-key-12345")
-
-
-@pytest.fixture
-def embedding_service(mock_env_api_key):
+def embedding_service(mock_settings):
     return OpenAIEmbeddingService()
 
 
-def test_init_with_default_model(mock_env_api_key):
+def test_init_with_default_model(mock_settings):
     service = OpenAIEmbeddingService()
     
     assert service.model == "text-embedding-3-small"
     assert service.api_key == "test-api-key-12345"
 
 
-def test_init_with_custom_model(mock_env_api_key):
+def test_init_with_custom_model(mock_settings):
     custom_model = "text-embedding-3-large"
     service = OpenAIEmbeddingService(model=custom_model)
     
@@ -32,14 +32,16 @@ def test_init_with_custom_model(mock_env_api_key):
     assert service.api_key == "test-api-key-12345"
 
 
-def test_init_without_api_key(monkeypatch):
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-    
-    with pytest.raises(ValueError, match="OPENAI_API_KEY is not set"):
-        OpenAIEmbeddingService()
+def test_init_without_api_key():
+    with patch('app.infrastructure.adapters.outbound.embeddings.embedding_service_open_ai.settings') as mock_settings:
+        mock_settings.OPENAI_API_KEY = None
+        mock_settings.OPENAI_MODEL = "text-embedding-3-small"
+        
+        with pytest.raises(ValueError, match="OPENAI_API_KEY is not set"):
+            OpenAIEmbeddingService()
 
 
-def test_init_sets_openai_api_key(mock_env_api_key):
+def test_init_sets_openai_api_key(mock_settings):
     with patch('app.infrastructure.adapters.outbound.embeddings.embedding_service_open_ai.openai') as mock_openai:
         service = OpenAIEmbeddingService()
         
@@ -68,7 +70,7 @@ def test_get_embedding_success(mock_create, embedding_service):
 
 
 @patch('app.infrastructure.adapters.outbound.embeddings.embedding_service_open_ai.openai.embeddings.create')
-def test_get_embedding_with_custom_model(mock_create, mock_env_api_key):
+def test_get_embedding_with_custom_model(mock_create):
     # Arrange
     custom_model = "text-embedding-3-large"
     service = OpenAIEmbeddingService(model=custom_model)
