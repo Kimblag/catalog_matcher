@@ -10,6 +10,7 @@ class CatalogNormalizer(BaseNormalizer):
         "name",
         "category",
         "description",
+        "active",
     }
 
     _OPTIONAL_FIELDS: set[str] = {
