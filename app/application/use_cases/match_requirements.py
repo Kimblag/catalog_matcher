@@ -1,5 +1,6 @@
 from typing import Any
 
+from app.application.dto.match_dtos import MatchItemDTO, MatchResultDTO, RequirementMatchDTO
 from app.application.exceptions.empty_requirement_file_exception import (
     EmptyRequirementFileException,
 )
@@ -29,7 +30,7 @@ class MatchRequirements:
         self.vector_repository = vector_repository
         self.top_k = top_k
 
-    def execute(self, file_bytes: bytes) -> list[dict]:
+    def execute(self, file_bytes: bytes) -> MatchResultDTO:
         raw_items = self.file_reader.read_requirements(file_bytes)
 
         if not raw_items:
@@ -49,8 +50,8 @@ class MatchRequirements:
 
         return output
 
-    def _get_matches(self, normalized_requirements, catalog):
-        output = []
+    def _get_matches(self, normalized_requirements, catalog) -> MatchResultDTO:
+        results: list[RequirementMatchDTO] = []
 
         for requirement in normalized_requirements:
             attributes_str = ",".join(
@@ -74,7 +75,7 @@ class MatchRequirements:
                 top_k=self.top_k,
             )
 
-            matches = []
+            matches: list[MatchItemDTO] = []
 
             for item_id, distance in candidates:
                 if distance > settings.MAX_DISTANCE:
@@ -83,27 +84,26 @@ class MatchRequirements:
                 item = catalog.get_item(item_id)
 
                 matches.append(
-                    {
-                        "catalog_item_id": item.item_id,
-                        "name": item.name,
-                        "category": item.category,
-                        "subcategory": item.subcategory,
-                        "description": item.description,
-                        "unit": item.unit,
-                        "provider": item.provider,
-                        "attributes": item.attributes,
-                        "score": distance,
-                    }
+                    MatchItemDTO(
+                        catalog_item_id=item.item_id,
+                        name=item.name,
+                        category=item.category,
+                        subcategory=item.subcategory,
+                        description=item.description,
+                        unit=item.unit,
+                        provider=item.provider,
+                        attributes=item.attributes,
+                        score=distance,
+                    )
                 )
 
-            # orden semántico explícito (menor distancia = mejor)
-            matches.sort(key=lambda m: m["score"])
+            matches.sort(key=lambda m: m.score)
 
-            output.append(
-                {
-                    "requirement": requirement,
-                    "matches": matches,
-                }
+            results.append(
+                RequirementMatchDTO(
+                    requirement=requirement,
+                    matches=matches,
+                )
             )
 
-        return output
+        return MatchResultDTO(results=results)
