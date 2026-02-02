@@ -39,9 +39,9 @@ def list_catalog(
     )
 
 
-@catalog_router.post("/items", status_code=status.HTTP_202_ACCEPTED)
+@catalog_router.post("/items", status_code=status.HTTP_200_OK)
 async def upsert_catalog(
-    background_tasks: BackgroundTasks,
+    # background_tasks: BackgroundTasks,
     catalog_repository: Annotated[CatalogRepository, Depends(get_catalog_repository)],
     file_reader: Annotated[FileReaderCSV, Depends(get_file_reader)],
     normalizer: Annotated[Normalizer, Depends(get_catalog_normalizer)],
@@ -60,8 +60,9 @@ async def upsert_catalog(
     )
 
     file_bytes = await catalog_file.read()
-    background_tasks.add_task(
-        use_case.execute, 
-        file_bytes)
+    use_case.execute(file_bytes)
+    # background_tasks.add_task(
+    #     use_case.execute, 
+    #     file_bytes)
 
     return
