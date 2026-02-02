@@ -11,6 +11,7 @@ from app.infrastructure.adapters.outbound import *
 from app.infrastructure.adapters.outbound.vector_store.vector_repository_faiss import (
     VectorRepositoryFAISS,
 )
+from app.infrastructure.utils.file_validation import validate_file_extension
 
 requirement_router = APIRouter(
     prefix="/requirements",
@@ -29,6 +30,8 @@ async def match(
     embedding_service: Annotated[EmbeddingService, Depends(get_embedding_service)],
     requirement_file: UploadFile = File(...),
 ):
+    validate_file_extension(requirement_file)
+    
     use_case = MatchRequirements(
         file_reader=file_reader,
         normalizer=normalizer,

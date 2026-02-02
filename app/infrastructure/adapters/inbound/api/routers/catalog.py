@@ -1,5 +1,4 @@
 from typing import Annotated
-from urllib import response
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile, status
 
@@ -12,6 +11,7 @@ from app.infrastructure.adapters.inbound.api.dependencies import *
 from app.infrastructure.adapters.outbound import *
 from app.infrastructure.adapters.outbound.vector_store.vector_repository_faiss import \
     VectorRepositoryFAISS
+from app.infrastructure.utils.file_validation import validate_file_extension
 
 catalog_router = APIRouter(
     prefix="/catalog",
@@ -49,6 +49,8 @@ async def upsert_catalog(
     embedding_service: Annotated[EmbeddingService, Depends(get_embedding_service)],
     catalog_file: UploadFile = File(...),
 ):
+    validate_file_extension(catalog_file)
+    
     use_case = UpsertCatalog(
         file_reader=file_reader,
         normalizer=normalizer,
