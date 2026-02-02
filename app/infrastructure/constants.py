@@ -1,0 +1,1 @@
+ALLOWED_FILE_EXTENSIONS: set[str] = {".csv"}

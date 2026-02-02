@@ -9,6 +9,7 @@ from app.application.ports.vector_repository import VectorRepository
 from app.infrastructure.exceptions.vector_repository_exception import (
     VectorRepositoryException,
 )
+from app.infrastructure.exceptions.vector_repository_validation_exception import VectorRepositoryValidationException
 
 
 class VectorRepositoryFAISS(VectorRepository):
@@ -46,7 +47,7 @@ class VectorRepositoryFAISS(VectorRepository):
 
         for item in items:
             if "embedding" not in item or "item_id" not in item:
-                raise ValueError("Each item must have 'embedding' and 'item_id' fields")
+                raise VectorRepositoryValidationException("Each item must have 'embedding' and 'item_id' fields")
 
         try:
             # Reset index
@@ -78,7 +79,7 @@ class VectorRepositoryFAISS(VectorRepository):
     ) -> list[tuple[str, float]]:
 
         if len(query_embedding) != self.dimension:
-            raise VectorRepositoryException(
+            raise VectorRepositoryValidationException(
                 f"Invalid Vector dimension. Expected dimension: {self.dimension}, got: {len(query_embedding)}"
             )
 
