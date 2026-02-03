@@ -1,6 +1,6 @@
 # CatalogMatcher
 
-CatalogMatcher es un servicio backend que automatiza la comparación de requerimientos contra un catálogo persistente, combinando reglas determinísticas con interpretación semántica mediante IA.
+CatalogMatcher es un servicio backend que automatiza la comparación de requerimientos contra un catálogo persistente, combinando **reglas determinísticas** con interpretación semántica mediante IA.
 
 El objetivo del sistema es reducir el trabajo manual necesario para analizar requerimientos técnicos o funcionales y encontrar coincidencias válidas dentro de un catálogo propio del sistema.
 
@@ -11,13 +11,14 @@ El objetivo del sistema es reducir el trabajo manual necesario para analizar req
 En muchos procesos operativos, los equipos reciben requerimientos en formato libre o semi-estructurado que deben compararse manualmente contra un catálogo de opciones existentes.
 
 Este proceso suele ser:
-- repetitivo
-- lento
-- propenso a errores
-- dependiente del criterio humano
-- difícil de escalar cuando el catálogo crece
 
-CatalogMatcher busca automatizar este flujo, manteniendo el control de las reglas de negocio y utilizando IA únicamente como apoyo para la interpretación semántica.
+* Repetitivo
+* Lento
+* Propenso a errores
+* Dependiente del criterio humano
+* Difícil de escalar cuando el catálogo crece
+
+CatalogMatcher busca automatizar este flujo, manteniendo el control de las reglas de negocio y utilizando IA únicamente **para generar embeddings y medir similitud semántica**.
 
 ---
 
@@ -25,24 +26,24 @@ CatalogMatcher busca automatizar este flujo, manteniendo el control de las regla
 
 El sistema permite:
 
-- Cargar y mantener un catálogo persistente a partir de archivos CSV
-- Validar estrictamente la estructura y los tipos de datos del catálogo
-- Extender el catálogo evitando duplicados
-- Recibir requerimientos en formato CSV/Excel para procesamiento masivo
-- Recibir requerimientos en lenguaje natural para consultas rápidas
-- Generar hasta N coincidencias por requerimiento (configurable)
-- Proveer justificaciones claras para cada coincidencia
-- Exportar los resultados en formato Excel
+* Cargar y mantener un catálogo persistente a partir de archivos CSV
+* Validar estrictamente la estructura y los tipos de datos del catálogo
+* Evitar duplicados al extender el catálogo
+* Recibir requerimientos en formato CSV para procesamiento masivo
+* Generar hasta N coincidencias por requerimiento (configurable)
+* Proveer justificaciones claras para cada coincidencia
+* Persistir embeddings y catálogos localmente usando FAISS
+
+> Nota: La IA se usa solo para embeddings y búsqueda semántica; las reglas de negocio son determinísticas y controladas por código.
 
 ---
 
 ## Qué NO hace el sistema
 
-- No utiliza base de datos (en esta versión)
-- No expone interfaz gráfica
-- No gestiona usuarios
-- No aprende automáticamente con el uso
-- No toma decisiones finales críticas
+* No expone interfaz gráfica
+* No gestiona usuarios ni autenticación
+* No aprende automáticamente con el uso
+* No toma decisiones finales críticas
 
 Estas decisiones son intencionales para mantener el alcance controlado y el sistema simple.
 
@@ -50,30 +51,28 @@ Estas decisiones son intencionales para mantener el alcance controlado y el sist
 
 ## Arquitectura
 
-El proyecto sigue una arquitectura limpia liviana, separando responsabilidades sin introducir sobreingeniería.
+El proyecto sigue una **arquitectura limpia**, separando responsabilidades sin sobreingeniería.
 
 ```
-
 app/
-├─ api/               # Endpoints HTTP
-├─ application/       # Casos de uso y servicios
-├─ domain/            # Modelos y reglas del dominio
-├─ infrastructure/    # Detalles externos (OpenAI, CSV, Excel)
-└─ data/              # Catálogo persistido
-
+├─ api/               # Endpoints HTTP (FastAPI)
+├─ application/       # Casos de uso, interfaces (ports)
+├─ domain/            # Modelos y reglas de negocio
+├─ infrastructure/    # Implementaciones externas (FAISS, OpenAI, CSV)
+└─ data/              # Archivos persistentes (catálogo, embeddings)
 ```
 
 ---
 
 ## Stack tecnológico
 
-- Python 3.13.7
-- FastAPI
-- Pydantic v2
-- Pandas
-- OpenAI API
-- Pytest (tests mínimos)
-- Exportación a Excel
+* Python 3.13.7
+* FastAPI
+* Pydantic v2
+* Pandas
+* FAISS (vector store local)
+* OpenAI API (solo embeddings)
+* Pytest
 
 ---
 
@@ -81,30 +80,30 @@ app/
 
 La IA se utiliza exclusivamente para:
 
-- Interpretar requerimientos en lenguaje natural
-- Detectar equivalencias semánticas
-- Proponer alternativas compatibles
+* Generar embeddings de texto para medir similitud semántica
+* Detectar equivalencias entre requerimientos y catálogo
 
-Las validaciones, reglas y límites del sistema son controlados por código determinístico.
+Todo lo demás (validaciones, reglas, límites) es **determinístico** y controlado por el código.
 
 ---
 
 ## Estado del proyecto
 
 Este proyecto fue desarrollado como ejercicio técnico enfocado en:
-- automatización de procesos
-- diseño de sistemas backend
-- uso responsable de IA
-- claridad arquitectónica
+
+* Automatización de procesos
+* Diseño de sistemas backend
+* Uso responsable de IA
+* Claridad arquitectónica
 
 ---
 
 ## Posibles extensiones futuras
 
-- Reemplazo del CSV por una base de datos
-- Versionado del catálogo
-- Persistencia de ejecuciones
-- Interfaz web
-- Cache de resultados
+* Migrar de archivos CSV a una base de datos estructurada
+* Versionado del catálogo
+* Persistencia de ejecuciones y resultados
+* Interfaz web
+* Cache de resultados
 
-Estas extensiones no forman parte del alcance actual.
+Estas extensiones **no forman parte del alcance actual**.
