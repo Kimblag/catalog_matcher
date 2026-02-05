@@ -1,3 +1,4 @@
+from typing import Any
 from app.application.ports.catalog_repository import CatalogRepository
 from app.domain.entities.catalog import Catalog
 
@@ -9,6 +10,10 @@ class DeactivateCatalogItem:
 
 
     def execute(self, item_id: str) -> None:
-        catalog: Catalog = self.catalog_repository.get()
-        catalog.deactivate_item(item_id)
+        catalog: list[dict[str, Any]] = self.catalog_repository.get()
+    
+        for item in catalog:
+            if item.get("id") == item_id:
+                item["active"] = False
+                break
         self.catalog_repository.save(catalog)
