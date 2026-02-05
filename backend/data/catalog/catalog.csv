@@ -1,0 +1,11 @@
+item_id,name,category,subcategory,description,unit,provider,attributes,active
+item-001,tornillo,ferreteria,metalicos,tornillo de acero inoxidable,unidad,acme,"{""material"": ""acero"", ""tama\u00f1o"": ""M6""}",true
+item-002,tuerca,ferreteria,metalicos,tuerca hexagonal,unidad,acme,"{""material"": ""acero"", ""tama\u00f1o"": ""M6""}",true
+item-003,martillo,ferreteria,herramientas,martillo de madera,unidad,toolcorp,"{""peso"": ""500g"", ""tipo"": ""clavo""}",true
+item-004,cinta aislante,ferreteria,electricidad,cinta para aislar cables,rollo,elecpro,"{""color"": ""negro"", ""largo"": ""10m""}",true
+item-005,llave inglesa,ferreteria,herramientas,llave ajustable,unidad,toolcorp,"{""tama\u00f1o_max"": ""24mm""}",true
+item-006,wd40,lubricante,aceites,aceite multiuso,ml,wd,"{""uso"": ""general"", ""olor"": ""neutral""}",true
+item-007,guantes de trabajo,ferreteria,proteccion,guantes de cuero resistentes,par,safehands,"{""talla"": ""L"", ""material"": ""cuero""}",true
+item-008,lampara led,iluminacion,hogar,lampara de escritorio led,unidad,brightlight,"{""potencia"": ""5W"", ""color_luz"": ""blanco""}",true
+item-009,pintura acrilica,pinturas,hogar,pintura para interiores,unidad,colormax,"{""color"": ""blanco"", ""litros"": ""1L""}",true
+item-010,destornillador,ferreteria,herramientas,destornillador plano y cruz,unidad,toolcorp,"{""tipo"": ""plano/cruz"", ""tama\u00f1o"": ""PH2""}",true

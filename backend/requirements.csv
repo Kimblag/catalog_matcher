@@ -1,0 +1,11 @@
+name,description,category,subcategory,quantity,unit,priority,provider,attributes
+Tornillo acero,Tornillo inoxidable de uso general,Ferretería,Metálicos,120,unidad,Alta,Acme,"{""material"": ""acero"", ""size"": ""M6""}"
+Tuerca hex,Tuerca para tornillos hexagonales,Ferretería,Metálicos,180,unidad,Media,Acme,"{""material"": ""acero""}"
+Martillo carpintero,Martillo de madera para clavos,Ferretería,Herramientas de mano,60,unidad,Alta,ToolCorp,"{""peso"": ""500g""}"
+Cinta para cables,Cinta aislante eléctrica,Ferretería,Electricidad,25,rollo,Media,ElecPro,"{""color"": ""negro""}"
+Llave ajustable,Llave inglesa para tuercas,Ferretería,Herramientas,20,unidad,Alta,ToolCorp,"{""max_size"": ""24mm""}"
+WD-40,Aceite multiuso,Lubricante,Aceites,50,ml,Baja,WD,"{""uso"": ""multiuso""}"
+Guantes de cuero,Guantes resistentes de trabajo,Ferretería,Protección,35,par,Alta,SafeHands,"{""talla"": ""L""}"
+Lámpara escritorio,Lámpara LED 5W,Iluminación,Hogar,10,unidad,Media,BrightLight,"{""color_luz"": ""blanco""}"
+Pintura interior,Pintura acrílica blanca,Pinturas,Hogar,12,unidad,Alta,ColorMax,"{""litros"": ""1L""}"
+Destornillador doble,Destornillador plano y cruz,Ferretería,Herramientas,30,unidad,Media,ToolCorp,"{""tipo"": ""PH2""}"
