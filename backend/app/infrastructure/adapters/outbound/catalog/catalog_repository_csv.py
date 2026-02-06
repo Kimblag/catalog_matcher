@@ -21,16 +21,15 @@ class CatalogRepositoryCSV(CatalogRepository):
         "active",
     ]
 
-    def __init__(self, csv_path: Path | None = None ) -> None:
+    def __init__(self, csv_path: Path | None = None) -> None:
         self.csv_path = csv_path or Path("data") / "catalog" / "catalog.csv"
         self.csv_path.parent.mkdir(parents=True, exist_ok=True)
-
 
     def get(self) -> list[dict[str, Any]]:
         if not self.csv_path.exists():
             return []
 
-        with open(self.csv_path, mode='r', encoding="utf-8") as file:
+        with open(self.csv_path, mode="r", encoding="utf-8") as file:
             csv_reader = csv.DictReader(file)
             items = []
             for row in csv_reader:
@@ -56,19 +55,15 @@ class CatalogRepositoryCSV(CatalogRepository):
                 items.append(item)
 
             return items
-    
 
     def save(self, catalog: list[dict[str, Any]]) -> None:
-        with open(self.csv_path, mode='w', newline="", encoding="utf-8") as file:
+        with open(self.csv_path, mode="w", newline="", encoding="utf-8") as file:
             writer = csv.DictWriter(
-                file,
-                fieldnames=self._FIELDNAMES,
-                extrasaction="ignore"
+                file, fieldnames=self._FIELDNAMES, extrasaction="ignore"
             )
             writer.writeheader()
             writer.writerows(self._serialize_rows(catalog))
 
-        
     def _serialize_rows(self, catalog: list[dict[str, Any]]) -> list[dict[str, Any]]:
         serialized = []
 
@@ -88,3 +83,38 @@ class CatalogRepositoryCSV(CatalogRepository):
             serialized.append(row)
 
         return serialized
+
+    def list_catagories(self) -> list[str]:
+        if not self.csv_path.exists():
+            return []
+
+        with open(self.csv_path, mode="r", encoding="utf-8") as file:
+            csv_reader = csv.DictReader(file)
+            categories_set: set[str] = {
+                (str(row.get("category"))) for row in csv_reader if row.get("category")
+            }
+            return list(categories_set)
+
+    def list_providers(self) -> list[str]:
+        if not self.csv_path.exists():
+            return []
+
+        with open(self.csv_path, mode="r", encoding="utf-8") as file:
+            csv_reader = csv.DictReader(file)
+            provider_set: set[str] = {
+                (str(row.get("provider"))) for row in csv_reader if row.get("provider")
+            }
+            return list(provider_set)
+
+    def list_subcategories(self, category: str) -> list[str]:
+        if not self.csv_path.exists():
+            return []
+
+        with open(self.csv_path, mode="r", encoding="utf-8") as file:
+            csv_reader = csv.DictReader(file)
+            subcategories_set: set[str] = {
+                (str(row.get("subcategory")))
+                for row in csv_reader
+                if row.get("subcategory")
+            }
+            return list(subcategories_set)

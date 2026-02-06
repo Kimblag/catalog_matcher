@@ -10,7 +10,7 @@ item-008,lampara led,iluminacion,hogar,lampara de escritorio led,unidad,brightli
 item-009,pintura acrilica,pinturas,hogar,pintura para interiores,unidad,colormax,"{""color"": ""blanco"", ""litros"": ""1L""}",true
 item-010,destornillador,ferreteria,herramientas,destornillador plano y cruz,unidad,toolcorp,"{""tipo"": ""plano/cruz"", ""tama\u00f1o"": ""PH2""}",true
 item-011,sierra manual,ferreteria,herramientas,sierra para madera,unidad,toolcorp,"{""tipo"": ""manual"", ""longitud"": ""18in""}",true
-item-012,taladro electrico,ferreteria,electricidad,taladro electrico 600w,unidad,powertools,"{""potencia"": ""600W"", ""velocidades"": ""2""}",true
+item-012,taladro electrico,ferreteria,electricidad,taladro electrico 600W,unidad,powertools,"{""potencia"": ""600W"", ""velocidades"": ""2""}",true
 item-013,alicate universal,ferreteria,herramientas,alicate multiuso,unidad,toolcorp,"{""material"": ""acero"", ""aislado"": ""false""}",true
 item-014,extension electrica,ferreteria,electricidad,extension 5 metros,unidad,elecpro,"{""largo"": ""5m"", ""enchufes"": ""3""}",true
 item-015,candado,ferreteria,seguridad,candado de acero,unidad,securelock,"{""tipo"": ""llave"", ""resistente"": ""agua""}",true

@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 import pytest
 
-from app.application.use_cases.deactivate_catalog_item import DeactivateCatalogItem
+from app.application.use_cases.update_catalog_item_status import UpdateCatalogItemStatus
 from app.domain.entities.catalog import Catalog
 from app.domain.enums.catalog_sources import CatalogSource
 from app.domain.exceptions.item_not_found_exception import ItemNotFoundException
@@ -21,7 +21,7 @@ def test_deactivate_catalog_item_happy_path():
     repo = Mock()
     repo.get.return_value = catalog
 
-    use_case = DeactivateCatalogItem(catalog_repository=repo)
+    use_case = UpdateCatalogItemStatus(catalog_repository=repo)
 
     # Act
     use_case.execute("ITEM-001")
@@ -40,7 +40,7 @@ def test_deactivate_catalog_item_not_found():
     repo = Mock()
     repo.get.return_value = catalog
 
-    use_case = DeactivateCatalogItem(catalog_repository=repo)
+    use_case = UpdateCatalogItemStatus(catalog_repository=repo)
 
     # Act & Assert
     with pytest.raises(ItemNotFoundException):
@@ -62,7 +62,7 @@ def test_deactivate_catalog_item_calls_repo_get_once():
     repo = Mock()
     repo.get.return_value = catalog
 
-    use_case = DeactivateCatalogItem(catalog_repository=repo)
+    use_case = UpdateCatalogItemStatus(catalog_repository=repo)
 
     # Act
     use_case.execute("ITEM-001")
@@ -84,7 +84,7 @@ def test_deactivate_catalog_item_calls_repo_save_once():
     repo = Mock()
     repo.get.return_value = catalog
 
-    use_case = DeactivateCatalogItem(catalog_repository=repo)
+    use_case = UpdateCatalogItemStatus(catalog_repository=repo)
 
     # Act
     use_case.execute("ITEM-001")
