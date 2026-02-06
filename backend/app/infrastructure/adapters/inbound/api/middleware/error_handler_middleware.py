@@ -100,6 +100,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
                 },
             )
         except Exception as exc:
+            print(f"Unexpected error: {exc}")
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={

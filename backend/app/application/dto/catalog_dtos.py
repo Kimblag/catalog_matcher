@@ -16,3 +16,15 @@ class CatalogItemDTO(BaseModel):
 
 class CatalogListDTO(BaseModel):
     items: list[CatalogItemDTO]
+
+
+class CategoriesListDTO(BaseModel):
+    categories: list[str]
+
+
+class SubcategoriesListDTO(BaseModel):
+    subcategories: list[str]
+
+
+class ProvidersListDTO(BaseModel):
+    providers: list[str]

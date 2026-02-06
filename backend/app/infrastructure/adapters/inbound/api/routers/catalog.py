@@ -1,17 +1,29 @@
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Query, UploadFile, status
-
-from app.application.dto.catalog_dtos import CatalogListDTO
+from app.application.dto.catalog_dtos import (
+    CatalogListDTO,
+    CategoriesListDTO,
+    ProvidersListDTO,
+    SubcategoriesListDTO,
+)
 from app.application.ports.catalog_repository import CatalogRepository
 from app.application.ports.normalizer import Normalizer
-from app.application.use_cases.upsert_catalog import UpsertCatalog
 from app.application.use_cases.list_catalog_items import ListCatalogItems
+from app.application.use_cases.list_categories import ListCategories
+from app.application.use_cases.list_providers import ListProviders
+from app.application.use_cases.list_subcategories import ListSubcategories
+from app.application.use_cases.update_catalog_item_status import UpdateCatalogItemStatus
+from app.application.use_cases.upsert_catalog import UpsertCatalog
 from app.infrastructure.adapters.inbound.api.dependencies import *
+from app.infrastructure.adapters.inbound.api.schemas.update_catalog_item_status_dto import (
+    UpdateCatalogItemStatusDTO,
+)
 from app.infrastructure.adapters.outbound import *
-from app.infrastructure.adapters.outbound.vector_store.vector_repository_faiss import \
-    VectorRepositoryFAISS
+from app.infrastructure.adapters.outbound.vector_store.vector_repository_faiss import (
+    VectorRepositoryFAISS,
+)
 from app.infrastructure.utils.file_validation import validate_file_extension
+from fastapi import APIRouter, Body, Depends, File, Path, Query, UploadFile, status
 
 catalog_router = APIRouter(
     prefix="/catalog",
@@ -22,19 +34,11 @@ catalog_router = APIRouter(
 @catalog_router.get("/", status_code=status.HTTP_200_OK, response_model=CatalogListDTO)
 def list_catalog(
     catalog_repository: Annotated[CatalogRepository, Depends(get_catalog_repository)],
-    category: Annotated[str | None, Query()] = None,
-    subcategory: Annotated[str | None, Query()] = None,
-    unit: Annotated[str | None, Query()] = None,
-    provider: Annotated[str | None, Query()] = None,
     include_inactive: Annotated[bool, Query()] = False,
 ):
     use_case = ListCatalogItems(catalog_repository)
 
     return use_case.execute(
-        category=category,
-        subcategory=subcategory,
-        unit=unit,
-        provider=provider,
         include_inactive=include_inactive,
     )
 
@@ -50,7 +54,7 @@ async def upsert_catalog(
     catalog_file: UploadFile = File(...),
 ):
     validate_file_extension(catalog_file)
-    
+
     use_case = UpsertCatalog(
         file_reader=file_reader,
         normalizer=normalizer,
@@ -62,7 +66,55 @@ async def upsert_catalog(
     file_bytes = await catalog_file.read()
     use_case.execute(file_bytes)
     # background_tasks.add_task(
-    #     use_case.execute, 
+    #     use_case.execute,
     #     file_bytes)
 
+    return
+
+
+@catalog_router.get(
+    "/categories", status_code=status.HTTP_200_OK, response_model=CategoriesListDTO
+)
+def list_categories(
+    catalog_repository: Annotated[CatalogRepository, Depends(get_catalog_repository)],
+):
+    use_case = ListCategories(catalog_repository=catalog_repository)
+
+    return use_case.execute()
+
+
+@catalog_router.get(
+    "/providers", status_code=status.HTTP_200_OK, response_model=ProvidersListDTO
+)
+def list_providers(
+    catalog_repository: Annotated[CatalogRepository, Depends(get_catalog_repository)],
+):
+    use_case = ListProviders(catalog_repository=catalog_repository)
+
+    return use_case.execute()
+
+
+@catalog_router.get(
+    "/subcategories",
+    status_code=status.HTTP_200_OK,
+    response_model=SubcategoriesListDTO,
+)
+def list_subcategories(
+    catalog_repository: Annotated[CatalogRepository, Depends(get_catalog_repository)],
+):
+    use_case = ListSubcategories(catalog_repository=catalog_repository)
+
+    return use_case.execute()
+
+
+@catalog_router.patch("/items/{item_id}/status", status_code=status.HTTP_204_NO_CONTENT)
+def update_catalog_item_status(
+    item_id: Annotated[str, Path()],
+    status: Annotated[UpdateCatalogItemStatusDTO, Body()],
+    catalog_repository: Annotated[CatalogRepository, Depends(get_catalog_repository)],
+):
+
+    use_case = UpdateCatalogItemStatus(catalog_repository=catalog_repository)
+
+    use_case.execute(item_id=item_id, active=status.active)
     return
