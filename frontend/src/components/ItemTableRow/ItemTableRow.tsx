@@ -8,16 +8,18 @@ const ItemTableRow = ({ item, onActivateToggle }: ItemTableRowProps) => {
         // if key is attributes, continue to next iteration
         key === 'attributes' ? null : <td key={key}>{String(value)}</td>,
       )}
-      <td>
-        <label>
-          <input
-            type="checkbox"
-            checked={item.active}
-            onChange={() => onActivateToggle && onActivateToggle(item.itemId)}
-          />
-          <span></span>
-        </label>
-      </td>
+      {onActivateToggle && (
+        <td>
+          <label>
+            <input
+              type="checkbox"
+              checked={item.active}
+              onChange={() => onActivateToggle && onActivateToggle(item.itemId)}
+            />
+            <span></span>
+          </label>
+        </td>
+      )}
     </tr>
   );
 };

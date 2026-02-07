@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import Upload from '../../components/BulkUpload/Upload';
 import DownloadTemplateButton from '../../components/Buttons/DownloadTemplateButton';
 import UploadButton from '../../components/Buttons/UploadButton';
@@ -43,15 +43,19 @@ const CatalogContainer = () => {
     type: 'idle',
   });
 
-  // Memoized CatalogService to avoid creating a new instance on every render
+  // use ref for upload and for CatalogService
+  const uploadAbortRef = useRef<AbortController | null>(null);
+  const catalogServiceRef = useRef<CatalogService | null>(null);
 
-  const catalogService = useMemo(() => new CatalogService(), []);
+  if (!catalogServiceRef.current) {
+    catalogServiceRef.current = new CatalogService();
+  }
 
   const handleDownloadTemplate = async () => {
     setActionState({ type: 'downloading' });
     const controller = new AbortController();
     try {
-      const result = await catalogService.downloadCatalogTemplate(
+      const result = await catalogServiceRef.current!.downloadCatalogTemplate(
         controller.signal,
       );
       if (result.error) {
@@ -82,20 +86,29 @@ const CatalogContainer = () => {
     if (!file) return;
 
     setActionState({ type: 'uploading' });
-    const controller = new AbortController();
+
+    uploadAbortRef.current?.abort(); // Abort any ongoing upload
+
+    const abortController = new AbortController();
+    uploadAbortRef.current = abortController;
+
     try {
-      const uploadResult = await catalogService.upsertCatalogCSV(
+      const uploadResult = await catalogServiceRef.current!.upsertCatalogCSV(
         file,
-        controller.signal,
+        abortController.signal,
       );
+
+      if (abortController.signal.aborted) {
+        return; // If the upload was aborted, exit early without setting error state
+      }
 
       if (uploadResult?.error) {
         setActionState({ type: 'error', error: uploadResult.error });
         return;
       }
 
-      const itemsResult = await catalogService.getItems(
-        controller.signal,
+      const itemsResult = await catalogServiceRef.current!.getItems(
+        abortController.signal,
         includeInactive,
       );
       if (itemsResult.error) {
@@ -104,7 +117,9 @@ const CatalogContainer = () => {
       }
       setCatalogItems(itemsResult.data!);
     } finally {
-      setActionState({ type: 'idle' });
+      if (!abortController.signal.aborted) {
+        setActionState({ type: 'idle' });
+      }
     }
   };
 
@@ -120,10 +135,10 @@ const CatalogContainer = () => {
         subcategoriesResult,
         providersResult,
       ] = await Promise.all([
-        catalogService.getItems(controller.signal),
-        catalogService.getCategories(controller.signal),
-        catalogService.getSubcategories(controller.signal),
-        catalogService.getProviders(controller.signal),
+        catalogServiceRef.current!.getItems(controller.signal),
+        catalogServiceRef.current!.getCategories(controller.signal),
+        catalogServiceRef.current!.getSubcategories(controller.signal),
+        catalogServiceRef.current!.getProviders(controller.signal),
       ]);
 
       const firstError =
@@ -155,13 +170,18 @@ const CatalogContainer = () => {
     };
 
     loadInitialData();
-  }, [catalogService]);
+
+    return () => {
+      controller.abort(); // Cleanup on unmount
+    };
+  }, []);
 
   // effect dependency to refetch items when includeInactive changes
   useEffect(() => {
+    const controller = new AbortController();
+
     const reloadItems = async () => {
-      const controller = new AbortController();
-      const result = await catalogService.getItems(
+      const result = await catalogServiceRef.current!.getItems(
         controller.signal,
         includeInactive,
       );
@@ -174,7 +194,11 @@ const CatalogContainer = () => {
     };
 
     reloadItems();
-  }, [includeInactive, catalogService]);
+
+    return () => {
+      controller.abort();
+    };
+  }, [includeInactive]);
 
   /* Filters handlers */
   const handleSearchInputChange = (
@@ -242,7 +266,7 @@ const CatalogContainer = () => {
 
     try {
       setActionState({ type: 'saving', itemId: item.itemId });
-      const result = await catalogService.toggleItemStatus(
+      const result = await catalogServiceRef.current!.toggleItemStatus(
         item.itemId,
         !item.active,
       );
@@ -303,86 +327,87 @@ const CatalogContainer = () => {
           />
           {actionState.type === 'uploading' && <p>Subiendo catálogo...</p>}
         </div>
+      </section>
+      {/* Table section  */}
+      {/* search and filter */}
+      <section>
+        <SearchInput value={searchTerm} onChange={handleSearchInputChange} />
 
-        {/* Table section  */}
-        {/* search and filter */}
-        <section>
-          <SearchInput value={searchTerm} onChange={handleSearchInputChange} />
-
-          <div>
-            <FilterSelect
-              name="category"
-              onChange={handleFilterOnChange}
-              options={categories}
-              value={categoryFilter}
-            />
-            <FilterSelect
-              name="subcategory"
-              onChange={handleFilterOnChange}
-              options={subcategories}
-              value={subcategoryFilter}
-            />
-            <FilterSelect
-              name="provider"
-              onChange={handleFilterOnChange}
-              options={providers}
-              value={providerFilter}
-            />
-
-            <label>
-              <input
-                type="checkbox"
-                checked={includeInactive}
-                onChange={(e) => setIncludeInactive(e.target.checked)}
-              />
-              Mostrar inactivos
-            </label>
-
-            {/* Filter clear */}
-            <button onClick={handleClearFilters}>Clear</button>
-          </div>
-        </section>
         <div>
-          {actionState.type === 'error' && (
-            <div>
-              <p>Error: {actionState.error.message}</p>
-            </div>
-          )}
-        </div>
-        {/* Table */}
-        <div>
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Categoría</th>
-                <th>Subcategoría</th>
-                <th>Descripción</th>
-                <th>Unidad</th>
-                <th>Proveedor</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems.length > 0 ? (
-                filteredItems.map((item) => (
-                  <ItemTableRow
-                    key={item.itemId}
-                    item={item}
-                    onActivateToggle={() => handleActivateToggle(item)}
-                  />
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={9}>No items found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <FilterSelect
+            name="category"
+            onChange={handleFilterOnChange}
+            options={categories}
+            value={categoryFilter}
+          />
+          <FilterSelect
+            name="subcategory"
+            onChange={handleFilterOnChange}
+            options={subcategories}
+            value={subcategoryFilter}
+          />
+          <FilterSelect
+            name="provider"
+            onChange={handleFilterOnChange}
+            options={providers}
+            value={providerFilter}
+          />
+
+          <label>
+            <input
+              type="checkbox"
+              checked={includeInactive}
+              onChange={(e) => setIncludeInactive(e.target.checked)}
+            />
+            Mostrar inactivos
+          </label>
+
+          {/* Filter clear */}
+          <button type="button" onClick={handleClearFilters}>
+            Limpiar filtros
+          </button>
         </div>
       </section>
+      <div>
+        {actionState.type === 'error' && (
+          <div>
+            <p>Error: {actionState.error.message}</p>
+          </div>
+        )}
+      </div>
+      {/* Table */}
+      <div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Categoría</th>
+              <th>Subcategoría</th>
+              <th>Descripción</th>
+              <th>Unidad</th>
+              <th>Proveedor</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item) => (
+                <ItemTableRow
+                  key={item.itemId}
+                  item={item}
+                  onActivateToggle={() => handleActivateToggle(item)}
+                />
+              ))
+            ) : (
+              <tr>
+                <td colSpan={9}>No items found.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
