@@ -1,2 +1,3 @@
 import { mapToFilterOptions } from './mapToFilterOptions.utils';
-export { mapToFilterOptions };
+import { mapToMatchList } from './mapToMatchList.utils';
+export { mapToFilterOptions, mapToMatchList };

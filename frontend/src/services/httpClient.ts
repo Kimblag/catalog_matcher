@@ -49,47 +49,53 @@ class HttpClient {
   async request<T>(
     signal?: AbortSignal,
   ): Promise<{ data?: T; error?: ApiError }> {
-    const response = await fetch(`${this.BASE_URL}${this.endpoint}`, {
-      headers: this.getHeaders(),
-      ...this.options,
-      signal,
-    });
+    try {
+      const response = await fetch(`${this.BASE_URL}${this.endpoint}`, {
+        headers: this.getHeaders(),
+        ...this.options,
+        signal,
+      });
 
-    // if response type is blob
-    if (this.responseType === 'blob') {
-      if (!response.ok) {
-        const text = await response.text();
-        return {
-          error: { code: 'unknown_error', message: text },
-        };
+      // if response type is blob
+      if (this.responseType === 'blob') {
+        if (!response.ok) {
+          const text = await response.text();
+          return {
+            error: { code: 'unknown_error', message: text },
+          };
+        }
+        return { data: (await response.blob()) as T };
       }
-      return { data: (await response.blob()) as T };
-    }
 
-    const payload: BackendErrorPayload & T = await response.json();
+      const payload: BackendErrorPayload & T = await response.json();
 
-    if (!response.ok) {
-      // extract error information from the api response and return it in a consistent format
-      const error: ApiError = {
-        code: payload.error_code ?? 'unknown_error',
-        message: payload.message ?? 'An unexpected error occurred',
-        details: payload.details,
-        correlationId: payload.correlation_id,
+      if (!response.ok) {
+        // extract error information from the api response and return it in a consistent format
+        const error: ApiError = {
+          code: payload.error_code ?? 'unknown_error',
+          message: payload.message ?? 'An unexpected error occurred',
+          details: payload.details,
+          correlationId: payload.correlation_id,
+        };
+        return { error };
+      }
+
+      return { data: payload as T };
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        // do not return an error if the request was aborted, just return an empty object
+        return {};
+      }
+
+      return {
+        error: {
+          code: 'network_error',
+          message:
+            'Cannot connect to the server. Please check your network connection and try again.',
+          details: err,
+        },
       };
-      return { error };
     }
-
-    return { data: payload as T };
-  }
-  catch(err: unknown) {
-    return {
-      error: {
-        code: 'network_error',
-        message:
-          'Cannot connect to the server. Please check your network connection and try again.',
-        details: err,
-      },
-    };
   }
 }
 
