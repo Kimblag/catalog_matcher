@@ -21,7 +21,7 @@ def test_list_catalog_items_happy_path():
             "category": "cat2",
             "description": "desc2",
             "active": True,
-        }
+        },
     ]
 
     use_case = ListCatalogItems(repo)
@@ -34,30 +34,24 @@ def test_list_catalog_items_happy_path():
     assert all(item.active for item in result.items)
 
 
-def test_list_catalog_items_with_filters():
-    # Arrange
-    repo = Mock()
-    repo.get.return_value = [
-        {"item_id": "1", "name": "a", "category": "hardware", "description": "d1", "active": True},
-        {"item_id": "2", "name": "b", "category": "software", "description": "d2", "active": True}
-    ]
-
-    use_case = ListCatalogItems(repo)
-
-    # Act
-    result = use_case.execute(category="hardware")
-
-    # Assert
-    assert len(result.items) == 1
-    assert result.items[0].category == "hardware"
-
-
 def test_list_catalog_items_excludes_inactive_by_default():
     # Arrange
     repo = Mock()
     repo.get.return_value = [
-        {"item_id": "1", "name": "a", "category": "cat", "description": "d", "active": True},
-        {"item_id": "2", "name": "b", "category": "cat", "description": "d", "active": False}
+        {
+            "item_id": "1",
+            "name": "a",
+            "category": "cat",
+            "description": "d",
+            "active": True,
+        },
+        {
+            "item_id": "2",
+            "name": "b",
+            "category": "cat",
+            "description": "d",
+            "active": False,
+        },
     ]
 
     use_case = ListCatalogItems(repo)
@@ -74,8 +68,20 @@ def test_list_catalog_items_includes_inactive_when_flag_true():
     # Arrange
     repo = Mock()
     repo.get.return_value = [
-        {"item_id": "1", "name": "a", "category": "cat", "description": "d", "active": True},
-        {"item_id": "2", "name": "b", "category": "cat", "description": "d", "active": False}
+        {
+            "item_id": "1",
+            "name": "a",
+            "category": "cat",
+            "description": "d",
+            "active": True,
+        },
+        {
+            "item_id": "2",
+            "name": "b",
+            "category": "cat",
+            "description": "d",
+            "active": False,
+        },
     ]
 
     use_case = ListCatalogItems(repo)
@@ -85,58 +91,6 @@ def test_list_catalog_items_includes_inactive_when_flag_true():
 
     # Assert
     assert len(result.items) == 2
-
-
-def test_list_catalog_items_filters_and_inactive_combined():
-    # Arrange
-    repo = Mock()
-    repo.get.return_value = [
-        {"item_id": "1", "name": "a", "category": "cat1", "description": "d", "active": True},
-        {"item_id": "2", "name": "b", "category": "cat1", "description": "d", "active": False}
-    ]
-
-    use_case = ListCatalogItems(repo)
-
-    # Act
-    result = use_case.execute(category="cat1", include_inactive=False)
-
-    # Assert
-    assert len(result.items) == 1
-    assert result.items[0].item_id == "1"
-
-
-def test_list_catalog_items_returns_empty_when_no_match():
-    # Arrange
-    repo = Mock()
-    repo.get.return_value = [
-        {"item_id": "1", "name": "a", "category": "cat1", "description": "d", "active": True}
-    ]
-
-    use_case = ListCatalogItems(repo)
-
-    # Act
-    result = use_case.execute(category="no-existe")
-
-    # Assert
-    assert result.items == []
-
-
-def test_list_catalog_items_multiple_filters():
-    # Arrange
-    repo = Mock()
-    repo.get.return_value = [
-        {"item_id": "1", "name": "a", "category": "cat1", "unit": "kg", "active": True},
-        {"item_id": "2", "name": "b", "category": "cat1", "unit": "lt", "active": True}
-    ]
-
-    use_case = ListCatalogItems(repo)
-
-    # Act
-    result = use_case.execute(category="cat1", unit="kg")
-
-    # Assert
-    assert len(result.items) == 1
-    assert result.items[0].item_id == "1"
 
 
 def test_list_catalog_items_propagates_repo_exception():

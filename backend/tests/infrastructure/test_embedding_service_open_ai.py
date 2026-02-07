@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock
 
 from app.infrastructure.adapters.outbound.embeddings.embedding_service_open_ai import OpenAIEmbeddingService
 from app.infrastructure.exceptions.embedding_service_exception import EmbeddingServiceException
+from app.infrastructure.exceptions.embedding_service_validation_exception import EmbeddingServiceValidationException
 
 
 @pytest.fixture
@@ -38,7 +39,7 @@ def test_init_without_api_key():
         mock_settings.OPENAI_API_KEY = None
         mock_settings.OPENAI_MODEL = "text-embedding-3-small"
         
-        with pytest.raises(EmbeddingServiceException, match="OPENAI_API_KEY is not set"):
+        with pytest.raises(EmbeddingServiceValidationException, match="OPENAI_API_KEY is not set"):
             OpenAIEmbeddingService()
 
 
@@ -105,7 +106,7 @@ def test_get_embedding_with_empty_string(mock_create, embedding_service):
     
     # Act
     # Assert
-    with pytest.raises(EmbeddingServiceException, match="Input text cannot be empty"):
+    with pytest.raises(EmbeddingServiceValidationException, match="Input text cannot be empty"):
         result = embedding_service.get_embedding(test_text)
     
 

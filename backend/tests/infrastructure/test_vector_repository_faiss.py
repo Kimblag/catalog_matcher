@@ -7,6 +7,7 @@ import pytest
 from app.infrastructure.adapters.outbound.vector_store.vector_repository_faiss import \
     VectorRepositoryFAISS
 from app.infrastructure.exceptions.vector_repository_exception import VectorRepositoryException
+from app.infrastructure.exceptions.vector_repository_validation_exception import VectorRepositoryValidationException
 from tests.infrastructure.fixtures.raw_items import *
 
 DIMENSION = 1536
@@ -122,7 +123,7 @@ def test_search_with_wrong_dimension_should_raise(tmp_path: Path, raw_catalog_it
     
     wrong_vector = raw_catalog_items_valid[0]["embedding"].tolist()
 
-    with pytest.raises(VectorRepositoryException, match="Invalid Vector dimension"):
+    with pytest.raises(VectorRepositoryValidationException, match="Invalid Vector dimension"):
         vector_repo.search(wrong_vector, top_k=3)
 
 def test_search_when_top_k_exceeds_total_items_returns_all_available(tmp_path: Path):

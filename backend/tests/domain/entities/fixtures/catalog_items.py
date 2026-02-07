@@ -1,43 +1,29 @@
 import pytest
 from app.domain.entities.catalog_item import CatalogItem
 
+
 @pytest.fixture
-def base_catalog_item() -> dict:
+def valid_item_dict():
     return {
-        "item_id": "123ABC",
+        "item_id": "1",
         "name": "WD40",
         "category": "Lubricante",
         "description": "Aceite multiuso",
         "subcategory": "Aceites",
         "unit": "ml",
         "provider": "WD",
-        "attributes": {"uso": "general", "olor": "neutral"}
+        "attributes": {"uso": "general"},
     }
 
 @pytest.fixture
-def min_catalog_item() -> dict:
-    return {
-        "item_id": "456DEF",
-        "name": "Silicona",
-        "category": "Lubricante",
-        "description": "Silicona en spray",
-        "subcategory": None,
-        "unit": None,
-        "provider": None,
-        "attributes": {}
-    }
-
-@pytest.fixture
-
-def alt_catalog_item() -> CatalogItem:
+def valid_item_obj():
     return CatalogItem(
-        item_id="789GHI",
+        item_id="2",
         name="Aceite Industrial",
         category="Lubricante",
         description="Aceite pesado",
-        active=True,
         subcategory="Aceites Pesados",
         unit="L",
         provider="IndusOil",
-        attributes={"uso": "industrial", "viscosidad": "alta"}
+        attributes={"uso": "industrial"}
     )

@@ -56,11 +56,8 @@ class CatalogItem:
         return new_item
 
     # Behavior
-    def activate(self) -> "CatalogItem":
-        return self._replace_and_validate(active=True)
-
-    def deactivate(self):
-        return replace(self, active=False)
+    def update_status(self, active: bool) -> "CatalogItem":
+        return self._replace_and_validate(active=active)
 
     def update_name(self, new_name: str) -> "CatalogItem":
         return self._replace_and_validate(name=new_name)

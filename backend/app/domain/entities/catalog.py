@@ -18,19 +18,19 @@ class Catalog:
         self.source: CatalogSource = catalog_source
         self.items: dict[str, CatalogItem] = {}
 
-
     # Behavior
     ## Add update item
-    def add_or_update_item(self,
-                           item_id: str,
-                           name: Optional[str] = None,
-                           category: Optional[str] = None,
-                           description: Optional[str] = None,
-                           subcategory: Optional[str] = None,
-                           unit: Optional[str] = None,
-                           provider: Optional[str] = None,
-                           attributes: Optional[dict[str, str]] = None,
-                           ) -> None:
+    def add_or_update_item(
+        self,
+        item_id: str,
+        name: Optional[str] = None,
+        category: Optional[str] = None,
+        description: Optional[str] = None,
+        subcategory: Optional[str] = None,
+        unit: Optional[str] = None,
+        provider: Optional[str] = None,
+        attributes: Optional[dict[str, str]] = None,
+    ) -> None:
         # Verify if it exists
         existing_item = self.items.get(item_id, None)
 
@@ -72,101 +72,68 @@ class Catalog:
         self.version += 1
         self.last_updated = datetime.now()
 
-
-    def _add_or_update_item_internal(
-        self,
-        item_id: str,
-        name: Optional[str],
-        category: Optional[str],
-        description: Optional[str],
-        subcategory: Optional[str],
-        unit: Optional[str],
-        provider: Optional[str],
-        attributes: Optional[dict[str, str]],
-    ) -> None:
+    def _add_or_update_item_internal(self, item: CatalogItem) -> None:
         """Internal method to add items by batches."""
-        existing_item = self.items.get(item_id)
+        existing_item = self.items.get(item.item_id)
 
         if existing_item is None:
-            self.items[item_id] = CatalogItem(
-                item_id=item_id,
-                name=name,
-                category=category,
-                description=description,
-                subcategory=subcategory,
-                unit=unit,
-                provider=provider,
-                attributes=attributes or {},
+            self.items[item.item_id] = CatalogItem(
+                item_id=item.item_id,
+                name=item.name,
+                category=item.category,
+                description=item.description,
+                subcategory=item.subcategory,
+                unit=item.unit,
+                provider=item.provider,
+                attributes=item.attributes or {},
             )
         else:
             updated_item = existing_item
-            if name is not None:
-                updated_item = updated_item.update_name(name)
-            if category is not None:
-                updated_item = updated_item.update_category(category)
-            if description is not None:
-                updated_item = updated_item.update_description(description)
-            if subcategory is not None:
-                updated_item = updated_item.update_subcategory(subcategory)
-            if unit is not None:
-                updated_item = updated_item.update_unit(unit)
-            if provider is not None:
-                updated_item = updated_item.update_provider(provider)
-            if attributes is not None:
-                updated_item = updated_item.replace_attributes(attributes)
+            if item.name is not None:
+                updated_item = updated_item.update_name(item.name)
+            if item.category is not None:
+                updated_item = updated_item.update_category(item.category)
+            if item.description is not None:
+                updated_item = updated_item.update_description(item.description)
+            if item.subcategory is not None:
+                updated_item = updated_item.update_subcategory(item.subcategory)
+            if item.unit is not None:
+                updated_item = updated_item.update_unit(item.unit)
+            if item.provider is not None:
+                updated_item = updated_item.update_provider(item.provider)
+            if item.attributes is not None:
+                updated_item = updated_item.replace_attributes(item.attributes)
 
-            self.items[item_id] = updated_item
-
+            self.items[item.item_id] = updated_item
 
     ## add or update in batches
-    def batch_upsert(self, list_items: list[dict[str, Any]]) -> dict[str, Any]:
+    def batch_upsert(self, list_items: list[CatalogItem]) -> dict[str, Any]:
         errors: dict[str, Any] = {}
 
         for item in list_items:
-            item_id = item.get("item_id", None)
+            item_id = item.item_id
             if not item_id:
                 errors[item_id or f"no_id_{len(errors)}"] = "Missing item_id"
                 continue
 
             try:
-                self._add_or_update_item_internal(
-                    item_id=item_id,
-                    name=item.get("name"),
-                    category=item.get("category"),
-                    description=item.get("description"),
-                    subcategory=item.get("subcategory"),
-                    unit=item.get("unit"),
-                    provider=item.get("provider"),
-                    attributes=item.get("attributes", {}),
-                )
+                self._add_or_update_item_internal(item=item)
             except Exception as e:
-                 errors[item_id] = str(e)
+                errors[item_id] = str(e)
 
-        
         if len(errors) != len(list_items):
             self.version += 1
             self.last_updated = datetime.now()
 
         return errors
 
-
-    ## activate item
-    def activate_item(self, item_id: str) -> None:
+    ## change item status
+    def update_item_status(self, item_id: str, active: bool) -> None:
         existing_item = self.items.get(item_id, None)
         if existing_item is None:
             raise ItemNotFoundException()
-        activated_item = existing_item.activate()
-        self.items[item_id] = activated_item
-
-
-    ## deactivate item
-    def deactivate_item(self, item_id: str) -> None:
-        existing_item = self.items.get(item_id, None)
-        if existing_item is None:
-            raise ItemNotFoundException()
-        deactivated_item = existing_item.deactivate()
-        self.items[item_id] = deactivated_item
-
+        updated_item = existing_item.update_status(active=active)
+        self.items[item_id] = updated_item
 
     ## update_item_name
     def update_item_name(self, item_id: str, new_name: str) -> None:
@@ -215,10 +182,11 @@ class Catalog:
             raise ItemNotFoundException()
         updated_item = existing_item.update_provider(new_provider)
         self.items[item_id] = updated_item
-   
-   
+
     ## update_item_attributes
-    def update_item_attributes(self, item_id: str, new_attributes: dict[str, str]) -> None:
+    def update_item_attributes(
+        self, item_id: str, new_attributes: dict[str, str]
+    ) -> None:
         existing_item = self.items.get(item_id, None)
         if existing_item is None:
             raise ItemNotFoundException()

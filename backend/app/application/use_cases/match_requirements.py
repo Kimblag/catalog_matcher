@@ -11,6 +11,7 @@ from app.application.ports.normalizer import Normalizer
 from app.application.ports.vector_repository import VectorRepository
 from app.domain.entities.catalog import Catalog
 from app.infrastructure.config import settings
+from app.application.utils.catalog_helpers import convert_to_catalog_items
 
 
 class MatchRequirements:
@@ -40,7 +41,8 @@ class MatchRequirements:
 
         normalized_requirements = self.normalizer.normalize(raw_items=raw_items)
 
-        catalog_items: list[dict[str, Any]] = self.catalog_repository.get()
+        persisted_items: list[dict[str, Any]] = self.catalog_repository.get()
+        catalog_items = convert_to_catalog_items(items_data=persisted_items)
         catalog = Catalog()
         catalog.batch_upsert(catalog_items)
 
