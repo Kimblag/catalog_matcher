@@ -79,10 +79,7 @@ const MatchingContainer = () => {
     setActionState({ type: 'uploading' });
 
     try {
-      const result = await matchService.uploadRequirementCSV(
-        file,
-        abortController.signal,
-      );
+      const result = await matchService.uploadCsv(file, abortController.signal);
 
       // check if it was aborted
       if (abortController.signal.aborted) return;
