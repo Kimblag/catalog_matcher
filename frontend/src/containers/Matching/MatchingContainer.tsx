@@ -107,7 +107,7 @@ const MatchingContainer = () => {
       <header>
         <PageHeader
           title="Panel de requerimientos"
-          subtitle="Sube el archivo CSV de requerimientos para obtener licitaciones"
+          subtitle="Sube el archivo CSV de requerimientos para obtener los matches con el catálogo de productos."
         />
         <DownloadTemplateButton
           onClick={handleDownloadTemplate}
