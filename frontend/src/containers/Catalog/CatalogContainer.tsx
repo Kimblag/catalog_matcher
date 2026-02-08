@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import Upload from '../../components/BulkUpload/Upload';
 import DownloadTemplateButton from '../../components/Buttons/DownloadTemplateButton';
 import UploadButton from '../../components/Buttons/UploadButton';
@@ -6,43 +6,11 @@ import PageHeader from '../../components/Catalog/PageHeader';
 import SearchInput from '../../components/Catalog/SearchInput';
 import FilterSelect from '../../components/FilterSelect/FilterSelect';
 import ItemTableRow from '../../components/ItemTableRow/ItemTableRow';
+import { useCatalogData, useCatalogFilters } from '../../hooks';
 import CatalogService from '../../services';
-import {
-  type ActionState,
-  type CatalogItem,
-  type CatalogList,
-  type FilterOptions,
-  type PageStatus,
-} from '../../types';
-import { mapToFilterOptions } from '../../utils';
+import { type ActionState, type CatalogItem } from '../../types';
 
 const CatalogContainer = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const [catalogItems, setCatalogItems] = useState<CatalogList>({ items: [] });
-
-  // filter state
-  const [categories, setCategories] = useState<FilterOptions>([]);
-  const [subcategories, setSubcategories] = useState<FilterOptions>([]);
-  const [providers, setProviders] = useState<FilterOptions>([]);
-
-  const [searchTerm, setSearchTerm] = useState<string>('');
-
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  const [subcategoryFilter, setSubcategoryFilter] = useState<string | null>(
-    null,
-  );
-  const [providerFilter, setProviderFilter] = useState<string | null>(null);
-
-  const [includeInactive, setIncludeInactive] = useState(false);
-
-  // page status, downloading, uploading, and error states
-  const [status, setStatus] = useState<PageStatus>({ type: 'loading' });
-
-  // State for action status (uploading, downloading, saving, deleting)
-  const [actionState, setActionState] = useState<ActionState>({
-    type: 'idle',
-  });
-
   // use ref for upload and for CatalogService
   const uploadAbortRef = useRef<AbortController | null>(null);
   const catalogServiceRef = useRef<CatalogService | null>(null);
@@ -50,6 +18,29 @@ const CatalogContainer = () => {
   if (!catalogServiceRef.current) {
     catalogServiceRef.current = new CatalogService();
   }
+  const {
+    catalogItems,
+    categories,
+    providers,
+    includeInactive,
+    setCatalogItems,
+    setIncludeInactive,
+    status,
+    subcategories,
+  } = useCatalogData(catalogServiceRef.current!);
+
+  const {
+    filters: { categoryFilter, providerFilter, searchTerm, subcategoryFilter },
+    filteredItems,
+    handlers: { clearFilters, handleFilterChange, handleSearchChange },
+  } = useCatalogFilters(catalogItems.items);
+
+  const [file, setFile] = useState<File | null>(null);
+
+  // State for action status (uploading, downloading, saving, deleting)
+  const [actionState, setActionState] = useState<ActionState>({
+    type: 'idle',
+  });
 
   const handleDownloadTemplate = async () => {
     setActionState({ type: 'downloading' });
@@ -93,7 +84,7 @@ const CatalogContainer = () => {
     uploadAbortRef.current = abortController;
 
     try {
-      const uploadResult = await catalogServiceRef.current!.upsertCatalogCSV(
+      const uploadResult = await catalogServiceRef.current!.uploadCsv(
         file,
         abortController.signal,
       );
@@ -122,138 +113,6 @@ const CatalogContainer = () => {
       }
     }
   };
-
-  // use effect to syncronyse with external data source, as the React documentation suggests.
-  useEffect(() => {
-    const controller = new AbortController();
-    const loadInitialData = async () => {
-      setStatus({ type: 'loading' });
-
-      const [
-        itemsResult,
-        categoriesResult,
-        subcategoriesResult,
-        providersResult,
-      ] = await Promise.all([
-        catalogServiceRef.current!.getItems(controller.signal),
-        catalogServiceRef.current!.getCategories(controller.signal),
-        catalogServiceRef.current!.getSubcategories(controller.signal),
-        catalogServiceRef.current!.getProviders(controller.signal),
-      ]);
-
-      const firstError =
-        itemsResult.error ||
-        categoriesResult.error ||
-        subcategoriesResult.error ||
-        providersResult.error;
-
-      // If any of the results has an error, set the error state and return early
-      if (firstError) {
-        setStatus({ type: 'error', error: firstError });
-        return;
-      }
-
-      setCatalogItems(itemsResult.data!);
-      setCategories(
-        mapToFilterOptions(categoriesResult.data!, 'Seleccionar categoría'),
-      );
-      setSubcategories(
-        mapToFilterOptions(
-          subcategoriesResult.data!,
-          'Seleccionar subcategoría',
-        ),
-      );
-      setProviders(
-        mapToFilterOptions(providersResult.data!, 'Seleccionar proveedor'),
-      );
-      setStatus({ type: 'ready' });
-    };
-
-    loadInitialData();
-
-    return () => {
-      controller.abort(); // Cleanup on unmount
-    };
-  }, []);
-
-  // effect dependency to refetch items when includeInactive changes
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const reloadItems = async () => {
-      const result = await catalogServiceRef.current!.getItems(
-        controller.signal,
-        includeInactive,
-      );
-
-      if (result.error) {
-        return;
-      }
-
-      setCatalogItems(result.data!);
-    };
-
-    reloadItems();
-
-    return () => {
-      controller.abort();
-    };
-  }, [includeInactive]);
-
-  /* Filters handlers */
-  const handleSearchInputChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setSearchTerm(event.target.value);
-  };
-
-  const handleFilterOnChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const { name, value } = event.target;
-    switch (name) {
-      case 'category':
-        setCategoryFilter(value);
-        break;
-      case 'subcategory':
-        setSubcategoryFilter(value);
-        break;
-      case 'provider':
-        setProviderFilter(value);
-        break;
-      default:
-        break;
-    }
-  };
-
-  const handleClearFilters = () => {
-    setCategoryFilter(null);
-    setSubcategoryFilter(null);
-    setProviderFilter(null);
-    setSearchTerm('');
-  };
-
-  // memoized filters to avoid unnecessary computations on every render
-  const filteredItems: CatalogItem[] = useMemo(() => {
-    return catalogItems.items
-      .filter((item) => !categoryFilter || item.category === categoryFilter)
-      .filter(
-        (item) => !subcategoryFilter || item.subcategory === subcategoryFilter,
-      )
-      .filter((item) => !providerFilter || item.provider === providerFilter)
-      .filter(
-        (item) =>
-          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.unit?.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
-  }, [
-    catalogItems,
-    categoryFilter,
-    subcategoryFilter,
-    providerFilter,
-    searchTerm,
-  ]);
 
   const handleActivateToggle = async (item: CatalogItem) => {
     const previousItems = structuredClone(catalogItems);
@@ -331,24 +190,24 @@ const CatalogContainer = () => {
       {/* Table section  */}
       {/* search and filter */}
       <section>
-        <SearchInput value={searchTerm} onChange={handleSearchInputChange} />
+        <SearchInput value={searchTerm} onChange={handleSearchChange} />
 
         <div>
           <FilterSelect
             name="category"
-            onChange={handleFilterOnChange}
+            onChange={handleFilterChange}
             options={categories}
             value={categoryFilter}
           />
           <FilterSelect
             name="subcategory"
-            onChange={handleFilterOnChange}
+            onChange={handleFilterChange}
             options={subcategories}
             value={subcategoryFilter}
           />
           <FilterSelect
             name="provider"
-            onChange={handleFilterOnChange}
+            onChange={handleFilterChange}
             options={providers}
             value={providerFilter}
           />
@@ -363,7 +222,7 @@ const CatalogContainer = () => {
           </label>
 
           {/* Filter clear */}
-          <button type="button" onClick={handleClearFilters}>
+          <button type="button" onClick={clearFilters}>
             Limpiar filtros
           </button>
         </div>

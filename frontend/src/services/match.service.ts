@@ -24,7 +24,7 @@ export class MatchService {
   }
 
   // upload requirement file and get matches
-  async uploadRequirementCSV(
+  async uploadCsv(
     file: File,
     signal?: AbortSignal,
   ): Promise<{ data?: MatchesList; error?: ApiError }> {

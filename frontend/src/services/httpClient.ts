@@ -84,7 +84,7 @@ class HttpClient {
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') {
         // do not return an error if the request was aborted, just return an empty object
-        return {};
+        throw err;
       }
 
       return {

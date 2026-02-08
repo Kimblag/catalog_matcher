@@ -37,7 +37,7 @@ export class CatalogService {
   }
 
   // Upload catalog CSV
-  async upsertCatalogCSV(
+  async uploadCsv(
     file: File,
     signal?: AbortSignal,
   ): Promise<{ error?: ApiError } | void> {
