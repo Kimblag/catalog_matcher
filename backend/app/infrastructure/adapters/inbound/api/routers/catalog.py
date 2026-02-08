@@ -31,7 +31,7 @@ catalog_router = APIRouter(
 )
 
 
-@catalog_router.get("/", status_code=status.HTTP_200_OK, response_model=CatalogListDTO)
+@catalog_router.get("", status_code=status.HTTP_200_OK, response_model=CatalogListDTO)
 def list_catalog(
     catalog_repository: Annotated[CatalogRepository, Depends(get_catalog_repository)],
     include_inactive: Annotated[bool, Query()] = False,
